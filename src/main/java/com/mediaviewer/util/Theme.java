@@ -7,8 +7,8 @@ import java.awt.Font;
 public final class Theme {
 
     private Theme() {}
-
-    public static final Color BG      = hex("#12151e");
+    //#aff2ea
+    public static final Color BG      = hex("#041e3b");
     public static final Color PANEL   = hex("#1a1f2e");
     public static final Color ACCENT  = hex("#1e2d4a");
     public static final Color HL      = hex("#e94560");

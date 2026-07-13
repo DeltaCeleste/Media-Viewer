@@ -27,9 +27,9 @@ public class FileScanner extends SwingWorker<List<MediaFile>, String> {
         ALL_EXTS = Collections.unmodifiableSet(all);
     }
 
-    private final File                     root;
-    private final Set<String>              allowedExts;
-    private final boolean                  recursive;
+    private final File                      root;
+    private final Set<String>               allowedExts;
+    private final boolean                   recursive;
     private final Consumer<List<MediaFile>> onDone;
     private final Consumer<String>          onProgress;
     private final AtomicBoolean             cancelled = new AtomicBoolean(false);
@@ -107,7 +107,9 @@ public class FileScanner extends SwingWorker<List<MediaFile>, String> {
         }
     }
 
-    /** Cancela el escaneo de forma segura. */
+    /**
+     * @brief Cancela el escaneo de forma segura. 
+     */
     public void stop() {
         cancelled.set(true);
         cancel(false);

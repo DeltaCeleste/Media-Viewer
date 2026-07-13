@@ -1,9 +1,9 @@
 @echo off
 REM ============================================================
-REM  MediaVault — Script de compilación para Windows
+REM  MediaViewer — Script de compilación para Windows
 REM ============================================================
 echo.
-echo  [MediaVault] Compilando...
+echo  [MediaViewer] Compilando...
 echo.
 
 REM Verificar que Maven esté en el PATH
@@ -25,9 +25,18 @@ if %errorlevel% neq 0 (
 )
 
 REM Compilar y empaquetar (fat JAR con todas las dependencias)
-mvn clean package -q
+call mvn clean package
+echo Maven termino con codigo: %errorlevel%
+set MVN_ERROR=%errorlevel%
 
-if %errorlevel% neq 0 (
+echo.
+echo  ========================================
+echo  Resultado de Maven: %MVN_ERROR%
+echo  ========================================
+echo.
+
+if %MVN_ERROR% neq 0 (
+    echo  [ERROR] Maven fallo con codigo: %MVN_ERROR%
     echo.
     echo  ERROR durante la compilacion. Revisa los mensajes de Maven arriba.
     pause
@@ -36,9 +45,9 @@ if %errorlevel% neq 0 (
 
 echo.
 echo  Compilacion exitosa!
-echo  JAR generado en: target\MediaVault-2.0.jar
+echo  JAR generado en: target\MediaViewer-2.0.jar
 echo.
 echo  Ejecutando la aplicacion...
-java -jar target\MediaVault-2.0.jar
+java -jar target\MediaViewer-2.0.jar
 
 pause

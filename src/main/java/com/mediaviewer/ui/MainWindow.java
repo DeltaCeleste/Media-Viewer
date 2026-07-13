@@ -57,7 +57,7 @@ public class MainWindow extends JFrame {
     private JLabel         viewerStatus;
 
     public MainWindow() {
-        super("MediaVault  v2");
+        super("Meδia Viewer");
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         setSize(1420, 900);
         setMinimumSize(new Dimension(960, 660));
@@ -80,18 +80,20 @@ public class MainWindow extends JFrame {
     }
 
     // ── UI ────────────────────────────────────────────────────────────────────
-
+    /**
+     * @brief Construye la Interfaz gráfica a partir de los paneles
+     */
     private void buildUI() {
         // ── Barra superior ──
         JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 7));
         topBar.setBackground(Theme.HL2);
 
-        JLabel logo = new JLabel("🎨  MediaVault");
+        JLabel logo = new JLabel("Meδia Viewer");
         logo.setForeground(Theme.TEXT);
         logo.setFont(new Font("Segoe UI", Font.BOLD, 14));
         topBar.add(logo);
 
-        JButton openBtn = accentButton("📂  Abrir carpeta");
+        JButton openBtn = accentButton("Abrir carpeta");
         openBtn.addActionListener(evt -> chooseDirectory());
         topBar.add(openBtn);
 
@@ -249,7 +251,9 @@ public class MainWindow extends JFrame {
     }
 
     // ── Teclas ────────────────────────────────────────────────────────────────
-
+    /**
+     * @brief Establece la lógica de la aplicación a algunas teclas y eventos de teclado para navegación por teclado
+     */
     private void bindKeys() {
         KeyStroke left   = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT,   0);
         KeyStroke right  = KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT,  0);
@@ -288,12 +292,16 @@ public class MainWindow extends JFrame {
             loadDirectory(fc.getSelectedFile());
     }
 
+    /**
+     * @brief Carga un directorio en la aplicación para leer su contenido
+     * @param dir El directorio que se debe cargar
+     */
     private void loadDirectory(File dir) {
         currentDir = dir;
         prefs.put("lastDir", dir.getAbsolutePath());
         String shortPath = dir.getAbsolutePath();
         if (shortPath.length() > 65) shortPath = "…" + shortPath.substring(shortPath.length() - 62);
-        dirLabel.setText(shortPath);
+        dirLabel.setText(shortPath); //Etiqueta de la topBar
         startScan();
     }
 
@@ -447,7 +455,9 @@ public class MainWindow extends JFrame {
     }
 
     // ── Cierre ────────────────────────────────────────────────────────────────
-
+    /**
+     * @brief Cierra la aplicación cerrando los recursos necesarios.
+     */
     private void shutdown() {
         if (activeScanner != null) activeScanner.stop();
         viewer.shutdown();
@@ -457,7 +467,10 @@ public class MainWindow extends JFrame {
     }
 
     // ── Helpers de estilo ─────────────────────────────────────────────────────
-
+    /**
+     * @brief Crea un botón de acento
+     * @param text El texto del botón
+     */
     private static JButton accentButton(String text) {
         JButton b = new JButton(text);
         b.setBackground(Theme.HL);
@@ -470,6 +483,10 @@ public class MainWindow extends JFrame {
         return b;
     }
 
+    /**
+     * @brief Crea un botón transparente
+     * @param text El texto del botón
+     */
     private static JButton ghostButton(String text) {
         JButton b = new JButton(text);
         b.setBackground(Theme.PANEL);
@@ -483,7 +500,9 @@ public class MainWindow extends JFrame {
     }
 
     // ── Look & Feel ───────────────────────────────────────────────────────────
-
+    /**
+     * @brief Aplica los estilos propios de Theme al UIManager
+     */
     private static void applyLookAndFeel() {
         try {
             // FlatLaf si está disponible, si no Nimbus, si no el del sistema

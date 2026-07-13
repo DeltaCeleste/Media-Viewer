@@ -1,1 +1,0 @@
-java -jar target\MediaVault-2.0.jar
