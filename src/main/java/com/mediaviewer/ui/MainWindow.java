@@ -35,6 +35,9 @@ import java.util.stream.Collectors;
  */
 public class MainWindow extends JFrame {
 
+    // —— Constantes
+    private final static int SHOW_SCAN_TIME = 10000
+
     // ── Estado ────────────────────────────────────────────────────────────────
     private List<MediaFile> allFiles      = new ArrayList<>();
     private List<MediaFile> filtered      = new ArrayList<>();
@@ -321,7 +324,7 @@ public class MainWindow extends JFrame {
             files -> {                       // onDone — ya en EDT via done()
                 allFiles = files;
                 scanLabel.setText(files.size() + " archivos encontrados");
-                Timer t = new Timer(2500, e -> scanLabel.setText(""));
+                Timer t = new Timer(SHOW_SCAN_TIME, e -> scanLabel.setText(""));
                 t.setRepeats(false); t.start();
                 applyFilters();
             },
