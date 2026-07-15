@@ -36,7 +36,8 @@ import java.util.stream.Collectors;
 public class MainWindow extends JFrame {
 
     // —— Constantes
-    private final static int SHOW_SCAN_TIME = 10000
+    private final static String FUENTE_DEFAULT = "Segoe UI Symbol";
+    private final static int    SHOW_SCAN_TIME = 10000;
 
     // ── Estado ────────────────────────────────────────────────────────────────
     private List<MediaFile> allFiles      = new ArrayList<>();
@@ -93,7 +94,7 @@ public class MainWindow extends JFrame {
 
         JLabel logo = new JLabel("Meδia Viewer");
         logo.setForeground(Theme.TEXT);
-        logo.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        logo.setFont(new Font(FUENTE_DEFAULT, Font.BOLD, 14));
         topBar.add(logo);
 
         JButton openBtn = accentButton("Abrir carpeta");
@@ -102,12 +103,12 @@ public class MainWindow extends JFrame {
 
         dirLabel = new JLabel("Sin carpeta — Ctrl+O para abrir");
         dirLabel.setForeground(Theme.DIM);
-        dirLabel.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        dirLabel.setFont(new Font(FUENTE_DEFAULT, Font.PLAIN, 10));
         topBar.add(dirLabel);
 
         scanLabel = new JLabel("");
         scanLabel.setForeground(Theme.SUCCESS);
-        scanLabel.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        scanLabel.setFont(new Font(FUENTE_DEFAULT, Font.PLAIN, 10));
         // empujar a la derecha
         topBar.add(Box.createHorizontalStrut(30));
         topBar.add(scanLabel);
@@ -122,7 +123,7 @@ public class MainWindow extends JFrame {
         viewer    = new ViewerPanel();
         viewerStatus = new JLabel("Selecciona una carpeta para empezar");
         viewerStatus.setForeground(Theme.DIM);
-        viewerStatus.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        viewerStatus.setFont(new Font(FUENTE_DEFAULT, Font.PLAIN, 10));
         viewer.setStatusLabel(viewerStatus);
 
         fileList  = new FileListPanel(this::selectByIndex);
@@ -154,6 +155,13 @@ public class MainWindow extends JFrame {
         add(buildNavBar(), BorderLayout.SOUTH);
     }
 
+    /**
+     * @brief Contruye el panel central compuesto por:
+     * - El vector de thumbnails
+     * - El campo de display para la imagen
+     * - La barra con los botones que permiten hacer zoom y el tamaño de la imagen
+     * @return El panel construido
+     */
     private JPanel buildCenterPanel() {
         thumbStrip = new ThumbnailStrip(this::selectByIndex);
 
@@ -161,11 +169,11 @@ public class MainWindow extends JFrame {
         center.setBackground(Theme.BG);
 
         // Status bar del visor (debajo del canvas)
-        JPanel viewerBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 3));
+        JPanel viewerBar = new JPanel(new GridLayout());
         viewerBar.setBackground(Theme.PANEL);
-        viewerBar.add(viewerStatus);
-
+        
         // Botones zoom
+        JPanel zoomButtons = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 3));
         for (String[] b : new String[][]{{"−","zoom−"},{"⟳","reset"},{"+","zoom+"},{"↗","open"}}) {
             JButton btn = new JButton(b[0]);
             btn.setBackground(Theme.ACCENT);
@@ -173,11 +181,15 @@ public class MainWindow extends JFrame {
             btn.setBorderPainted(false);
             btn.setFocusPainted(false);
             btn.setOpaque(true);
-            btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            btn.setFont(new Font(FUENTE_DEFAULT, Font.PLAIN, 12));
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             btn.addActionListener(evt -> handleViewerAction(b[1]));
-            viewerBar.add(btn);
-        }
+            zoomButtons.add(btn);
+        }        
+
+        viewerBar.add(viewerStatus);
+        viewerBar.add(zoomButtons); 
+        viewerBar.add(Box.createHorizontalStrut(viewerStatus.getWidth()));
 
         center.add(viewer,    BorderLayout.CENTER);
         center.add(viewerBar, BorderLayout.SOUTH);
@@ -185,30 +197,31 @@ public class MainWindow extends JFrame {
         return center;
     }
 
+    /** 
+     * @brief Construye la barra de navegación con los botones pertinentes
+     * @return El panel construido
+     */
     private JPanel buildNavBar() {
         JPanel nav = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
         nav.setBackground(Theme.PANEL);
         nav.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER));
 
+        nav.setLayout(new BorderLayout());
+
+        // Botones Izquierdos
+        JPanel leftNav = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
+        leftNav.setBackground(Theme.PANEL);
         for (String[] b : new String[][]{{"⏮","first"},{"◀","prev"},{"▶","next"},{"⏭","last"}}) {
             JButton btn = new JButton(b[0]);
-            btn.setBackground(Theme.ACCENT);
-            btn.setForeground(Theme.TEXT);
-            btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            btn.setBorderPainted(false);
-            btn.setFocusPainted(false);
-            btn.setOpaque(true);
-            btn.setPreferredSize(new Dimension(44, 32));
-            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            styleNavBtn(btn);
             btn.addActionListener(evt -> handleNav(b[1]));
-            nav.add(btn);
+            leftNav.add(btn);
         }
-
+        leftNav.add(Box.createHorizontalStrut(10));
         posLabel = new JLabel("—");
         posLabel.setForeground(Theme.DIM);
-        posLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        nav.add(Box.createHorizontalStrut(12));
-        nav.add(posLabel);
+        posLabel.setFont(new Font(FUENTE_DEFAULT, Font.PLAIN, 11));
+        leftNav.add(posLabel);
 
         // Botones derechos
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 6));
@@ -224,28 +237,19 @@ public class MainWindow extends JFrame {
         delete.addActionListener(evt -> deleteCurrentFile());
         right.add(delete);
 
-        nav.add(right);
-        // Stretch
-        nav.setLayout(new BorderLayout());
-        JPanel leftNav = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
-        leftNav.setBackground(Theme.PANEL);
-        for (String[] b : new String[][]{{"⏮","first"},{"◀","prev"},{"▶","next"},{"⏭","last"}}) {
-            JButton btn = new JButton(b[0]);
-            styleNavBtn(btn);
-            btn.addActionListener(evt -> handleNav(b[1]));
-            leftNav.add(btn);
-        }
-        leftNav.add(Box.createHorizontalStrut(10));
-        leftNav.add(posLabel);
         nav.add(leftNav, BorderLayout.WEST);
         nav.add(right, BorderLayout.EAST);
         return nav;
     }
 
+    /**
+     * @brief Aplica un estilo predefinido (Estilo de navegación) a un botón 
+     * @param b el botón
+     */
     private void styleNavBtn(JButton b) {
         b.setBackground(Theme.ACCENT);
         b.setForeground(Theme.TEXT);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        b.setFont(new Font(FUENTE_DEFAULT, Font.BOLD, 14));
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setOpaque(true);
@@ -285,7 +289,9 @@ public class MainWindow extends JFrame {
     }
 
     // ── Directorio ────────────────────────────────────────────────────────────
-
+    /**
+     * @brief Crea el diálogo default para seleccionar directorio en el que trabajar
+     */
     private void chooseDirectory() {
         JFileChooser fc = new JFileChooser(
             currentDir != null ? currentDir : new File(System.getProperty("user.home")));
@@ -388,7 +394,9 @@ public class MainWindow extends JFrame {
     }
 
     // ── Selección / Navegación ────────────────────────────────────────────────
-
+    /**
+     * @brief selecciona un archivo por su indice en el vector de filtrados y actualiza la vista con este elemento
+     */
     public void selectByIndex(int idx) {
         if (filtered.isEmpty()) return;
         idx = Math.max(0, Math.min(idx, filtered.size() - 1));
@@ -406,7 +414,10 @@ public class MainWindow extends JFrame {
     private void goTo(int idx) { selectByIndex(idx); }
 
     // ── Acciones ──────────────────────────────────────────────────────────────
-
+    /**
+     * @brief Lógica para los botones de navegación rápida
+     * @param cmd La cadena que identifica el comando
+     */
     private void handleNav(String cmd) {
         switch (cmd) {
             case "prev"  -> goTo(currentIdx - 1);
@@ -416,6 +427,10 @@ public class MainWindow extends JFrame {
         }
     }
 
+    /**
+     * @brief Lógica para los botones de zoom del panel central
+     * @param cmd La cadena que identifica el comando
+     */
     private void handleViewerAction(String cmd) {
         switch (cmd) {
             case "zoom−" -> viewer.zoomOut();
@@ -478,7 +493,7 @@ public class MainWindow extends JFrame {
         JButton b = new JButton(text);
         b.setBackground(Theme.HL);
         b.setForeground(Color.WHITE);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        b.setFont(new Font(FUENTE_DEFAULT, Font.BOLD, 11));
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setOpaque(true);
@@ -494,7 +509,7 @@ public class MainWindow extends JFrame {
         JButton b = new JButton(text);
         b.setBackground(Theme.PANEL);
         b.setForeground(Theme.DIM);
-        b.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        b.setFont(new Font(FUENTE_DEFAULT, Font.PLAIN, 10));
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setOpaque(true);
