@@ -127,7 +127,6 @@ public class ThumbnailStrip extends JPanel {
         if (mf.getType() != MediaFile.MediaType.VIDEO) {
             pool.submit(() -> loadThumb(mf, imgLbl, gen));
         } else {
-            System.out.println("a");
             try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(mf.getPath())) {
                 grabber.start();
 

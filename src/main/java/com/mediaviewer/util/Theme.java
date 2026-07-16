@@ -25,6 +25,7 @@ public final class Theme {
     public static final Font  FONT_MED   = new Font("Segoe UI", Font.PLAIN, 11);
     public static final Font  FONT_SMALL = new Font("Segoe UI", Font.PLAIN,  9);
     public static final Font  FONT_MONO  = new Font("Consolas",  Font.PLAIN, 10);
+    public static final String FUENTE_DEFAULT = "Segoe UI Symbol";
 
     private static Color hex(String h) {
         return Color.decode(h);

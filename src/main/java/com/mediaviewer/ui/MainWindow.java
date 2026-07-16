@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 public class MainWindow extends JFrame {
 
     // —— Constantes
-    private final static String FUENTE_DEFAULT = "Segoe UI Symbol";
     private final static int    SHOW_SCAN_TIME = 10000;
 
     // ── Estado ────────────────────────────────────────────────────────────────
@@ -94,7 +93,7 @@ public class MainWindow extends JFrame {
 
         JLabel logo = new JLabel("Meδia Viewer");
         logo.setForeground(Theme.TEXT);
-        logo.setFont(new Font(FUENTE_DEFAULT, Font.BOLD, 14));
+        logo.setFont(new Font(Theme.FUENTE_DEFAULT, Font.BOLD, 14));
         topBar.add(logo);
 
         JButton openBtn = accentButton("Abrir carpeta");
@@ -103,12 +102,12 @@ public class MainWindow extends JFrame {
 
         dirLabel = new JLabel("Sin carpeta — Ctrl+O para abrir");
         dirLabel.setForeground(Theme.DIM);
-        dirLabel.setFont(new Font(FUENTE_DEFAULT, Font.PLAIN, 10));
+        dirLabel.setFont(new Font(Theme.FUENTE_DEFAULT, Font.PLAIN, 10));
         topBar.add(dirLabel);
 
         scanLabel = new JLabel("");
         scanLabel.setForeground(Theme.SUCCESS);
-        scanLabel.setFont(new Font(FUENTE_DEFAULT, Font.PLAIN, 10));
+        scanLabel.setFont(new Font(Theme.FUENTE_DEFAULT, Font.PLAIN, 10));
         // empujar a la derecha
         topBar.add(Box.createHorizontalStrut(30));
         topBar.add(scanLabel);
@@ -123,7 +122,7 @@ public class MainWindow extends JFrame {
         viewer    = new ViewerPanel();
         viewerStatus = new JLabel("Selecciona una carpeta para empezar");
         viewerStatus.setForeground(Theme.DIM);
-        viewerStatus.setFont(new Font(FUENTE_DEFAULT, Font.PLAIN, 10));
+        viewerStatus.setFont(new Font(Theme.FUENTE_DEFAULT, Font.PLAIN, 10));
         viewer.setStatusLabel(viewerStatus);
 
         fileList  = new FileListPanel(this::selectByIndex);
@@ -181,7 +180,7 @@ public class MainWindow extends JFrame {
             btn.setBorderPainted(false);
             btn.setFocusPainted(false);
             btn.setOpaque(true);
-            btn.setFont(new Font(FUENTE_DEFAULT, Font.PLAIN, 12));
+            btn.setFont(new Font(Theme.FUENTE_DEFAULT, Font.PLAIN, 12));
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             btn.addActionListener(evt -> handleViewerAction(b[1]));
             zoomButtons.add(btn);
@@ -220,7 +219,7 @@ public class MainWindow extends JFrame {
         leftNav.add(Box.createHorizontalStrut(10));
         posLabel = new JLabel("—");
         posLabel.setForeground(Theme.DIM);
-        posLabel.setFont(new Font(FUENTE_DEFAULT, Font.PLAIN, 11));
+        posLabel.setFont(new Font(Theme.FUENTE_DEFAULT, Font.PLAIN, 11));
         leftNav.add(posLabel);
 
         // Botones derechos
@@ -249,7 +248,7 @@ public class MainWindow extends JFrame {
     private void styleNavBtn(JButton b) {
         b.setBackground(Theme.ACCENT);
         b.setForeground(Theme.TEXT);
-        b.setFont(new Font(FUENTE_DEFAULT, Font.BOLD, 14));
+        b.setFont(new Font(Theme.FUENTE_DEFAULT, Font.BOLD, 14));
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setOpaque(true);
@@ -493,7 +492,7 @@ public class MainWindow extends JFrame {
         JButton b = new JButton(text);
         b.setBackground(Theme.HL);
         b.setForeground(Color.WHITE);
-        b.setFont(new Font(FUENTE_DEFAULT, Font.BOLD, 11));
+        b.setFont(new Font(Theme.FUENTE_DEFAULT, Font.BOLD, 11));
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setOpaque(true);
@@ -509,7 +508,7 @@ public class MainWindow extends JFrame {
         JButton b = new JButton(text);
         b.setBackground(Theme.PANEL);
         b.setForeground(Theme.DIM);
-        b.setFont(new Font(FUENTE_DEFAULT, Font.PLAIN, 10));
+        b.setFont(new Font(Theme.FUENTE_DEFAULT, Font.PLAIN, 10));
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setOpaque(true);
