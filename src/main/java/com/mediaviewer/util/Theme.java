@@ -11,7 +11,7 @@ public final class Theme {
     public static final Color BG      = hex("#041e3b");
     public static final Color PANEL   = hex("#1a1f2e");
     public static final Color ACCENT  = hex("#1e2d4a");
-    public static final Color HL      = hex("#e94560");
+    public static final Color HL      = hex("#e94560"); // Highlight para imagenes
     public static final Color HL2     = hex("#0f3460");
     public static final Color TEXT    = hex("#e8eaf0");
     public static final Color DIM     = hex("#6b7a99");

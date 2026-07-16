@@ -14,6 +14,10 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
 
+import org.bytedeco.javacv.FFmpegFrameGrabber;
+import org.bytedeco.javacv.Frame;
+import org.bytedeco.javacv.Java2DFrameConverter;
+
 /**
  * Tira horizontal de miniaturas.
  *  - Se regenera completamente cuando cambia la lista de archivos.
@@ -65,7 +69,11 @@ public class ThumbnailStrip extends JPanel {
         setPreferredSize(new Dimension(0, TH + 40));
     }
 
-    /** Puebla la tira con una nueva lista. Cancela cargas previas. */
+    /** 
+     * @brief Puebla la tira con una nueva lista. Cancela cargas previas. 
+     * @param newItems Lista de los nuevos elementos a cargar en la tira
+     * @param initialIdx Indice que referencia a la imagen inicial
+     */
     public void populate(List<MediaFile> newItems, int initialIdx) {
         int gen = genCounter.incrementAndGet(); // invalida todos los callbacks previos
         this.items   = newItems;
@@ -119,8 +127,31 @@ public class ThumbnailStrip extends JPanel {
         if (mf.getType() != MediaFile.MediaType.VIDEO) {
             pool.submit(() -> loadThumb(mf, imgLbl, gen));
         } else {
-            imgLbl.setText("🎬");
-            imgLbl.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
+            System.out.println("a");
+            try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(mf.getPath())) {
+                grabber.start();
+
+                // Salta al segundo indicado (el parámetro está en microsegundos)
+                grabber.setTimestamp((long) (1_000_000));
+
+                // Captura un fotograma en ese instante
+                Frame frame = grabber.grabImage();
+
+                if (frame != null) {
+                    // Convierte el fotograma a una imagen Java
+                    Java2DFrameConverter converter = new Java2DFrameConverter();
+                    BufferedImage bufferedImage = converter.getBufferedImage(frame);
+
+                    pool.submit(() -> loadThumbVideo(bufferedImage, imgLbl, gen));
+
+                } else {
+                    throw new Exception();
+                }
+            }
+            catch (Exception e) {
+                imgLbl.setText("🎬");
+                imgLbl.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
+            }
         }
 
         return cell;
@@ -145,13 +176,39 @@ public class ThumbnailStrip extends JPanel {
         }
     }
 
-    /** Resalta la celda activa y desresalta las demás. */
+    private void loadThumbVideo(BufferedImage videoThumb, JLabel lbl, int gen) {
+        if (genCounter.get() != gen) return;
+        try {
+            BufferedImage thumb = Thumbnails.of(videoThumb)
+                .size(TW, TH).keepAspectRatio(true)
+                .outputQuality(0.85).asBufferedImage();
+            if (genCounter.get() != gen) return;
+            ImageIcon icon = new ImageIcon(thumb);
+            SwingUtilities.invokeLater(() -> {
+                if (genCounter.get() != gen) return;
+                lbl.setIcon(icon);
+                lbl.setText("");
+            });
+        } catch (Exception e) {
+            if (genCounter.get() != gen) return;
+            SwingUtilities.invokeLater(() -> lbl.setText("?"));
+        }
+    }
+
+    /** 
+     * @brief Resalta la celda activa y desresalta las demás. También ajusta el scroll a esta imagen 
+     * @param idx el índice de la imagen a resaltar
+     */
     public void highlight(int idx) {
         this.current = idx;
         highlightCell(idx);
         scrollToCell(idx);
     }
 
+    /**
+     * @brief Recorre el array de celdas quitando el resalto a todas y aplicandosela a la seleccionada
+     * @param idx el índice de la imagen a resaltar
+     */
     private void highlightCell(int idx) {
         if (cells == null) return;
         for (int i = 0; i < cells.length; i++) {
@@ -161,6 +218,11 @@ public class ThumbnailStrip extends JPanel {
         }
     }
 
+    /**
+     * @brief Establece el color de fondo de un contenedor y sus componentes internas recursivamente
+     * @param c El contenedor actual
+     * @param bg El color de fondo al que se va a cambiar
+     */
     private void setAllBg(Container c, Color bg) {
         c.setBackground(bg);
         for (Component ch : c.getComponents()) {
@@ -169,6 +231,10 @@ public class ThumbnailStrip extends JPanel {
         }
     }
 
+    /**
+     * @brief Mueve el scroll hacia la imagen seleccionada
+     * @param idx el índice de la imagen
+     */
     private void scrollToCell(int idx) {
         if (cells == null || idx < 0 || idx >= cells.length) return;
         SwingUtilities.invokeLater(() -> {
@@ -177,9 +243,17 @@ public class ThumbnailStrip extends JPanel {
         });
     }
 
+    /**
+     * @brief Trunca una cadena de texto a una cantidad de caracteres dada (acabandola en ...)
+     * @param s La cadena a truncar
+     * @param max La cantidad máxima de caracteres a dejar
+     */
     private static String truncate(String s, int max) {
         return s.length() <= max ? s : s.substring(0, max - 1) + "…";
     }
 
+    /**
+     * @brief Cierre de la pool y los hilos. No necesario por ser demonios, pero más seguro y controlado
+     */
     public void shutdown() { pool.shutdownNow(); }
 }

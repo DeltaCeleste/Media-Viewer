@@ -15,6 +15,9 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <javacv.version>1.5.10</javacv.version>
+        <!-- Propiedad que usaremos para el classifier -->
+        <javacpp.platform>${os.detected.classifier}</javacpp.platform>
     </properties>
 
     <dependencies>
@@ -37,6 +40,19 @@
             <groupId>net.coobird</groupId>
             <artifactId>thumbnailator</artifactId>
             <version>0.4.20</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacv</artifactId>
+            <version>${javacv.version}</version>
+        </dependency>
+        <!-- Dependencia que usará el classifier definido en el profile -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>6.1.1-${javacv.version}</version>
+            <classifier>${javacpp.platform}</classifier>
         </dependency>
     </dependencies>
 
@@ -74,5 +90,30 @@
                 </executions>
             </plugin>
         </plugins>
+        <extensions>
+            <!-- Extensión necesaria para detectar el SO automáticamente -->
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.1</version>
+            </extension>
+        </extensions>
     </build>
+    <!-- Profiles que se activan según el SO -->
+    <profiles>
+        <profile>
+            <id>windows</id>
+            <activation><os><family>windows</family></os></activation>
+            <properties>
+                <javacpp.platform>windows-x86_64</javacpp.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>linux</id>
+            <activation><os><family>unix</family></os></activation>
+            <properties>
+                <javacpp.platform>linux-x86_64</javacpp.platform>
+            </properties>
+        </profile>
+    </profiles>
 </project>
