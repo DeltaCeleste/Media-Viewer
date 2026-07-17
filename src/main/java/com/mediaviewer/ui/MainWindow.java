@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public class MainWindow extends JFrame {
 
     // —— Constantes
-    private final static int    SHOW_SCAN_TIME = 10000;
+    private final static int    SHOW_SCAN_TIME = 5000;
 
     // ── Estado ────────────────────────────────────────────────────────────────
     private List<MediaFile> allFiles      = new ArrayList<>();
@@ -410,7 +410,7 @@ public class MainWindow extends JFrame {
     public void selectByIndex(int idx) {
         if (filtered.isEmpty()) return;
         idx = Math.max(0, Math.min(idx, filtered.size() - 1));
-        if (idx == currentIdx) return;
+        if (idx == currentIdx) return; // Esto solo debe ocurrir si la llamada NO viene de una recarga de directorio sustituir mas abajo con mf != vierwer.getCurrent()
         currentIdx = idx;
         MediaFile mf = filtered.get(idx);
 

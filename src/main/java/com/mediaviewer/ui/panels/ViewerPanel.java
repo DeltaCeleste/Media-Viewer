@@ -69,9 +69,13 @@ public class ViewerPanel extends JPanel {
     }
 
     public void setStatusLabel(JLabel lbl) { this.statusLabel = lbl; }
+    public MediaFile getCurrent()          { return this.current; }
 
     // ── Carga pública ────────────────────────────────────────────────────────
-
+    /**
+     * @brief Carga el archivo pasado
+     * @param mf El MediaFile que contiene la referencia al archivo
+     */
     public void load(MediaFile mf) {
         // Cancelar carga anterior
         if (currentLoad != null && !currentLoad.isDone())
@@ -95,7 +99,11 @@ public class ViewerPanel extends JPanel {
     }
 
     // ── Imagen estática ──────────────────────────────────────────────────────
-
+    /**
+     * @brief Carga una imagen estática en el visor
+     * @param mf la referencia a la imagen
+     * @param gen el identificador de orden que debecoincidir con loadGen
+     */
     private void loadImage(MediaFile mf, int gen) {
         loading = true;
         spinTimer.start();
@@ -143,7 +151,11 @@ public class ViewerPanel extends JPanel {
     }
 
     // ── GIF animado ──────────────────────────────────────────────────────────
-
+    /**
+     * @brief Carga una imagen animada (gif) en el visor
+     * @param mf la referencia a la imagen
+     * @param gen el identificador de orden que debecoincidir con loadGen
+     */
     private void loadGif(MediaFile mf, int gen) {
         // Swing soporta GIF animado nativamente via ImageIcon — sin libs extra
         loading = true;
@@ -192,6 +204,9 @@ public class ViewerPanel extends JPanel {
         });
     }
 
+    /**
+     * @brief Elimina el gifLabel actual si existiera
+     */
     private void stopGif() {
         if (gifLabel != null) {
             remove(gifLabel);
@@ -202,7 +217,10 @@ public class ViewerPanel extends JPanel {
     }
 
     // ── Placeholder de video ──────────────────────────────────────────────────
-
+    /**
+     * @brief Carga un placeholder en el panel si el video falla
+     * @param mf la referencia al archivo seleccionado para apertura externa
+     */
     private void showVideoPlaceholder(MediaFile mf) {
         loading  = false;
         spinTimer.stop();
@@ -311,7 +329,9 @@ public class ViewerPanel extends JPanel {
     }
 
     // ── Zoom / Pan ────────────────────────────────────────────────────────────
-
+    /**
+     * @brief Crea y añade los listenners para permitir manipulación del archivo mediante ratón
+     */
     private void setupMouse() {
         MouseAdapter ma = new MouseAdapter() {
             @Override public void mousePressed(MouseEvent e) {
@@ -342,25 +362,37 @@ public class ViewerPanel extends JPanel {
     public void zoomOut() { zoom = Math.max(zoom / 1.25, 0.04); scaledCache = null; repaint(); updateZoomStatus(); }
     public void resetView() { zoom = 1.0; offX = offY = 0; scaledCache = null; repaint(); updateZoomStatus(); }
 
+    /**
+     * @brief Actualiza el estado con el zoom actual
+     */
     private void updateZoomStatus() {
         if (origImage != null)
             updateStatus(origImage.getWidth() + " × " + origImage.getHeight()
                          + " px  |  zoom " + Math.round(zoom * 100) + "%");
     }
 
+    /**
+     * @brief Actualiza la etiqueta de estado
+     * @param text El texto para la etiqueta
+     */
     private void updateStatus(String text) {
         if (statusLabel != null) statusLabel.setText(text);
     }
 
     // ── Spinner ───────────────────────────────────────────────────────────────
-
+    /**
+     * @brief Monta el timer para el spiner (frikada total)
+     */
     private void setupSpinner() {
         spinTimer = new Timer(80, evt -> { spinIdx++; repaint(); });
         spinTimer.setRepeats(true);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-
+    /**
+     * @brief Abre externamente el archivo seleccionado
+     * @param file el archivo en cuestión
+     */
     private static void openExternally(File file) {
         try {
             Desktop.getDesktop().open(file);
@@ -371,11 +403,16 @@ public class ViewerPanel extends JPanel {
         }
     }
 
+    /**
+     * @brief Genera un botón con estilo concreto
+     * @param text La etiqueta del botón
+     * @return el botón
+     */
     private static JButton styledButton(String text) {
         JButton b = new JButton(text);
         b.setBackground(Theme.HL);
         b.setForeground(Color.WHITE);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        b.setFont(new Font(Theme.FONT_SYMBOL, Font.BOLD, 11));
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -383,7 +420,9 @@ public class ViewerPanel extends JPanel {
         return b;
     }
 
-    /** Limpia todo para mostrar estado vacío. */
+    /** 
+     * @brief Limpia todo para mostrar estado vacío. 
+     */
     public void clear() {
         if (currentLoad != null) currentLoad.cancel(true);
         loadGen.incrementAndGet();
