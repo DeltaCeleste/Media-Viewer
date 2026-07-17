@@ -48,7 +48,9 @@ public class MediaFile {
     public long      getSize()     { return file.length(); }
     public long      getLastModified() { return file.lastModified(); }
 
-    /** Devuelve tamaño legible: "1.2 MB". */
+    /** 
+     * @brief Devuelve tamaño legible: "1.2 MB". 
+     */
     public String getHumanSize() {
         long n = file.length();
         String[] units = {"B", "KB", "MB", "GB", "TB"};
@@ -58,14 +60,19 @@ public class MediaFile {
         return String.format("%.1f %s", d, units[i]);
     }
 
-    /** Devuelve fecha de modificación formateada. */
+    /** 
+     * @brief Devuelve fecha de modificación formateada. 
+     */
     public String getFormattedDate() {
         LocalDateTime dt = LocalDateTime.ofInstant(
             Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault());
         return dt.format(FMT);
     }
 
-    /** Actualiza la referencia al archivo (tras renombrar). */
+    /** 
+     * @brief Actualiza la referencia al archivo (tras renombrar).
+     * @param newFile el nuevo archivo
+     */
     public void updateFile(File newFile) {
         this.file = newFile;
     }

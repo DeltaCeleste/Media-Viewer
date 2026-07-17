@@ -93,7 +93,7 @@ public class MainWindow extends JFrame {
 
         JLabel logo = new JLabel("Meδia Viewer");
         logo.setForeground(Theme.TEXT);
-        logo.setFont(new Font(Theme.FUENTE_DEFAULT, Font.BOLD, 14));
+        logo.setFont(new Font(Theme.FONT_SYMBOL, Font.BOLD, 14));
         topBar.add(logo);
 
         JButton openBtn = accentButton("Abrir carpeta");
@@ -102,12 +102,12 @@ public class MainWindow extends JFrame {
 
         dirLabel = new JLabel("Sin carpeta — Ctrl+O para abrir");
         dirLabel.setForeground(Theme.DIM);
-        dirLabel.setFont(new Font(Theme.FUENTE_DEFAULT, Font.PLAIN, 10));
+        dirLabel.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 10));
         topBar.add(dirLabel);
 
         scanLabel = new JLabel("");
         scanLabel.setForeground(Theme.SUCCESS);
-        scanLabel.setFont(new Font(Theme.FUENTE_DEFAULT, Font.PLAIN, 10));
+        scanLabel.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 10));
         // empujar a la derecha
         topBar.add(Box.createHorizontalStrut(30));
         topBar.add(scanLabel);
@@ -122,7 +122,7 @@ public class MainWindow extends JFrame {
         viewer    = new ViewerPanel();
         viewerStatus = new JLabel("Selecciona una carpeta para empezar");
         viewerStatus.setForeground(Theme.DIM);
-        viewerStatus.setFont(new Font(Theme.FUENTE_DEFAULT, Font.PLAIN, 10));
+        viewerStatus.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 10));
         viewer.setStatusLabel(viewerStatus);
 
         fileList  = new FileListPanel(this::selectByIndex);
@@ -180,7 +180,7 @@ public class MainWindow extends JFrame {
             btn.setBorderPainted(false);
             btn.setFocusPainted(false);
             btn.setOpaque(true);
-            btn.setFont(new Font(Theme.FUENTE_DEFAULT, Font.PLAIN, 12));
+            btn.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 12));
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             btn.addActionListener(evt -> handleViewerAction(b[1]));
             zoomButtons.add(btn);
@@ -219,7 +219,7 @@ public class MainWindow extends JFrame {
         leftNav.add(Box.createHorizontalStrut(10));
         posLabel = new JLabel("—");
         posLabel.setForeground(Theme.DIM);
-        posLabel.setFont(new Font(Theme.FUENTE_DEFAULT, Font.PLAIN, 11));
+        posLabel.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 11));
         leftNav.add(posLabel);
 
         // Botones derechos
@@ -248,7 +248,7 @@ public class MainWindow extends JFrame {
     private void styleNavBtn(JButton b) {
         b.setBackground(Theme.ACCENT);
         b.setForeground(Theme.TEXT);
-        b.setFont(new Font(Theme.FUENTE_DEFAULT, Font.BOLD, 14));
+        b.setFont(new Font(Theme.FONT_SYMBOL, Font.BOLD, 14));
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setOpaque(true);
@@ -340,7 +340,12 @@ public class MainWindow extends JFrame {
 
     // ── Filtrado / Ordenación (rápido, en EDT) ────────────────────────────────
 
-    private void applyFilters() {
+    /**
+     * @brief Aplica los filtros y manda a un archivo concreto
+     * @param idx el indice de dicho archivo
+     */
+    private void applyFilters(int idx) {
+        System.out.println("Índice recibido en applyFileters: " + idx);
         FilterOptions opts = filterBar.get();
         List<MediaFile> items = new ArrayList<>(allFiles);
 
@@ -382,14 +387,21 @@ public class MainWindow extends JFrame {
         filtered = items;
         filterBar.setCount(filtered.size(), allFiles.size());
         fileList.populate(filtered);
-        thumbStrip.populate(filtered, 0);
+        thumbStrip.populate(filtered, idx);
 
-        if (!filtered.isEmpty()) selectByIndex(0);
+        if (!filtered.isEmpty()) selectByIndex(idx);
         else {
             currentIdx = -1;
             viewer.clear();
             posLabel.setText("—");
         }
+    }
+
+    /**
+     * @brief Aplica los filtros y manda al inicio del array
+     */
+    private void applyFilters() {
+        applyFilters(0);
     }
 
     // ── Selección / Navegación ────────────────────────────────────────────────
@@ -447,6 +459,10 @@ public class MainWindow extends JFrame {
             posLabel.setText((currentIdx+1) + " / " + filtered.size() + "   " + mf.getName());
     }
 
+    /**
+     * @brief Pide confirmación para eliminar la imagen seleccionada actualmente (por índice) y de ser afirmativa
+     *        la respuesta la elimina y actualiza la interfaz
+     */
     private void deleteCurrentFile() {
         if (currentIdx < 0 || filtered.isEmpty()) return;
         MediaFile mf = filtered.get(currentIdx);
@@ -456,13 +472,17 @@ public class MainWindow extends JFrame {
         if (choice != JOptionPane.YES_OPTION) return;
         if (mf.getFile().delete()) {
             allFiles.remove(mf);
-            applyFilters();
+            applyFilters(currentIdx-1);
         } else {
             JOptionPane.showMessageDialog(this, "No se pudo eliminar el archivo.",
                 "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    /**
+     * @brief Abre externamente un archivo concreto
+     * @param file La ruta al archivo
+     */
     private void openExternally(File file) {
         try { Desktop.getDesktop().open(file); }
         catch (Exception e) {
@@ -492,7 +512,7 @@ public class MainWindow extends JFrame {
         JButton b = new JButton(text);
         b.setBackground(Theme.HL);
         b.setForeground(Color.WHITE);
-        b.setFont(new Font(Theme.FUENTE_DEFAULT, Font.BOLD, 11));
+        b.setFont(new Font(Theme.FONT_SYMBOL, Font.BOLD, 11));
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setOpaque(true);
@@ -508,7 +528,7 @@ public class MainWindow extends JFrame {
         JButton b = new JButton(text);
         b.setBackground(Theme.PANEL);
         b.setForeground(Theme.DIM);
-        b.setFont(new Font(Theme.FUENTE_DEFAULT, Font.PLAIN, 10));
+        b.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 10));
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setOpaque(true);

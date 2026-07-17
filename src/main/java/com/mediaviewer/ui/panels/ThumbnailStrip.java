@@ -39,7 +39,7 @@ public class ThumbnailStrip extends JPanel {
     private final AtomicInteger  genCounter = new AtomicInteger(0);
 
     private List<MediaFile> items     = List.of();
-    private int             current   = -1;
+    public int             current   = -1;
     private IntConsumer     onSelect;
     private JPanel[]        cells;
 
@@ -92,6 +92,13 @@ public class ThumbnailStrip extends JPanel {
         scrollToCell(initialIdx);
     }
 
+    /**
+     * @brief Construye una celda para representar una thumbnail
+     * @param idx indice de la file cuya thumbnail se va a representar
+     * @param gen El contador que representa el número de la orden actual, si no coincide con el contador actual
+     *            la generación se desestima por estar desactualizada
+     * @return La celda construida
+     */
     private JPanel buildCell(int idx, int gen) {
         MediaFile mf = items.get(idx);
 
@@ -127,35 +134,19 @@ public class ThumbnailStrip extends JPanel {
         if (mf.getType() != MediaFile.MediaType.VIDEO) {
             pool.submit(() -> loadThumb(mf, imgLbl, gen));
         } else {
-            try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(mf.getPath())) {
-                grabber.start();
-
-                // Salta al segundo indicado (el parámetro está en microsegundos)
-                grabber.setTimestamp((long) (1_000_000));
-
-                // Captura un fotograma en ese instante
-                Frame frame = grabber.grabImage();
-
-                if (frame != null) {
-                    // Convierte el fotograma a una imagen Java
-                    Java2DFrameConverter converter = new Java2DFrameConverter();
-                    BufferedImage bufferedImage = converter.getBufferedImage(frame);
-
-                    pool.submit(() -> loadThumbVideo(bufferedImage, imgLbl, gen));
-
-                } else {
-                    throw new Exception();
-                }
-            }
-            catch (Exception e) {
-                imgLbl.setText("🎬");
-                imgLbl.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
-            }
+            pool.submit(() -> loadThumbVideo(mf, imgLbl, gen));
         }
 
         return cell;
     }
 
+    /**
+     * @brief Construye la thumbnail a partir de una imagen o gif
+     * @param mf el MediaFile que referencia la imagen
+     * @param lbl la etiqueta de texto donde irá la imagen
+     * @param gen El contador que representa el número de la orden actual, si no coincide con el contador actual
+     *            la generación se desestima por estar desactualizada
+     */
     private void loadThumb(MediaFile mf, JLabel lbl, int gen) {
         if (genCounter.get() != gen) return;
         try {
@@ -175,22 +166,47 @@ public class ThumbnailStrip extends JPanel {
         }
     }
 
-    private void loadThumbVideo(BufferedImage videoThumb, JLabel lbl, int gen) {
+    /**
+     * @brief Construye la thumbnail a partir de un video
+     * @param mf el MediaFile que referencia la imagen
+     * @param lbl la etiqueta de texto donde irá la imagen
+     * @param gen El contador que representa el número de la orden actual, si no coincide con el contador actual
+     *            la generación se desestima por estar desactualizada
+     */
+    private void loadThumbVideo(MediaFile mf, JLabel lbl, int gen) {
         if (genCounter.get() != gen) return;
-        try {
-            BufferedImage thumb = Thumbnails.of(videoThumb)
-                .size(TW, TH).keepAspectRatio(true)
-                .outputQuality(0.85).asBufferedImage();
-            if (genCounter.get() != gen) return;
-            ImageIcon icon = new ImageIcon(thumb);
-            SwingUtilities.invokeLater(() -> {
+
+        try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(mf.getPath())) {
+            grabber.start();
+
+            // Salta al segundo indicado (el parámetro está en microsegundos)
+            grabber.setTimestamp((long) (1_000_000));
+
+            // Captura un fotograma en ese instante
+            Frame frame = grabber.grabImage();
+
+            if (frame != null) {
+                // Convierte el fotograma a una imagen Java
+                Java2DFrameConverter converter = new Java2DFrameConverter();
+                BufferedImage bufferedImage = converter.getBufferedImage(frame); 
+
+                BufferedImage thumb = Thumbnails.of(bufferedImage)
+                    .size(TW, TH).keepAspectRatio(true)
+                    .outputQuality(0.85).asBufferedImage();
                 if (genCounter.get() != gen) return;
-                lbl.setIcon(icon);
-                lbl.setText("");
-            });
+                ImageIcon icon = new ImageIcon(thumb);
+                SwingUtilities.invokeLater(() -> {
+                    if (genCounter.get() != gen) return;
+                    lbl.setIcon(icon);
+                    lbl.setText("");
+                });
+
+            } else {
+                throw new Exception();
+            }
         } catch (Exception e) {
             if (genCounter.get() != gen) return;
-            SwingUtilities.invokeLater(() -> lbl.setText("?"));
+            SwingUtilities.invokeLater(() -> {lbl.setText("🎬"); lbl.setFont(new Font(Theme.FONT_EMOJI, Font.PLAIN, 22));});
         }
     }
 
