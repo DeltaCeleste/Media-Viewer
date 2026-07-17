@@ -345,7 +345,6 @@ public class MainWindow extends JFrame {
      * @param idx el indice de dicho archivo
      */
     private void applyFilters(int idx) {
-        System.out.println("Índice recibido en applyFileters: " + idx);
         FilterOptions opts = filterBar.get();
         List<MediaFile> items = new ArrayList<>(allFiles);
 

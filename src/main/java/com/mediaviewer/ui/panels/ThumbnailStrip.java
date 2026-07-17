@@ -17,6 +17,7 @@ import java.util.function.IntConsumer;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.Java2DFrameConverter;
+import org.bytedeco.ffmpeg.global.avutil;
 
 /**
  * Tira horizontal de miniaturas.
@@ -177,6 +178,7 @@ public class ThumbnailStrip extends JPanel {
         if (genCounter.get() != gen) return;
 
         try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(mf.getPath())) {
+            avutil.av_log_set_level(avutil.AV_LOG_ERROR); //Silenciamos los mensajes en consola
             grabber.start();
 
             // Salta al segundo indicado (el parámetro está en microsegundos)
