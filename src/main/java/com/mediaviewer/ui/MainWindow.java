@@ -410,9 +410,11 @@ public class MainWindow extends JFrame {
     public void selectByIndex(int idx) {
         if (filtered.isEmpty()) return;
         idx = Math.max(0, Math.min(idx, filtered.size() - 1));
-        if (idx == currentIdx) return; // Esto solo debe ocurrir si la llamada NO viene de una recarga de directorio sustituir mas abajo con mf != vierwer.getCurrent()
+        //if (idx == currentIdx) return;
         currentIdx = idx;
         MediaFile mf = filtered.get(idx);
+
+        if (mf == viewer.getCurrent()) return;
 
         viewer.load(mf);
         metaPanel.load(mf);

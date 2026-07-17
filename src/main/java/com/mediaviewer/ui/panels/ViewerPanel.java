@@ -88,6 +88,7 @@ public class ViewerPanel extends JPanel {
         current     = mf;
         loadGen.incrementAndGet();
         int gen = loadGen.get();
+        removeAll();
 
         if (mf == null) { repaint(); return; }
 
