@@ -1,6 +1,6 @@
-package com.mediavault.engine;
+package com.mediaviewer.engine;
 
-import com.mediavault.model.MediaFile;
+import com.mediaviewer.model.MediaFile;
 
 import javax.swing.*;
 import java.io.File;

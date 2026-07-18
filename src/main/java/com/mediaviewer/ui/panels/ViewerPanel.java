@@ -1,7 +1,7 @@
-package com.mediavault.ui.panels;
+package com.mediaviewer.ui.panels;
 
-import com.mediavault.model.MediaFile;
-import com.mediavault.util.Theme;
+import com.mediaviewer.model.MediaFile;
+import com.mediaviewer.util.Theme;
 import net.coobird.thumbnailator.Thumbnails;
 
 import javax.imageio.ImageIO;
@@ -38,6 +38,9 @@ public class ViewerPanel extends JPanel {
     // ── GIF animado ──────────────────────────────────────────────────────────
     private JLabel gifLabel = null;
     private Timer  gifTimer = null;
+
+    // ── Video ────────────────────────────────────────────────────────────────
+    private VideoPanel videoPanel = null;
 
     // ── Carga asíncrona ──────────────────────────────────────────────────────
     private final ExecutorService loader =
@@ -86,14 +89,13 @@ public class ViewerPanel extends JPanel {
         zoom        = 1.0;
         offX = offY = 0;
         current     = mf;
-        loadGen.incrementAndGet();
+        clear();
         int gen = loadGen.get();
-        removeAll();
-
+        
         if (mf == null) { repaint(); return; }
 
         switch (mf.getType()) {
-            case VIDEO -> showVideoPlaceholder(mf);
+            case VIDEO -> loadVideo(mf, gen);
             case GIF   -> loadGif(mf, gen);
             default    -> loadImage(mf, gen);
         }
@@ -103,7 +105,7 @@ public class ViewerPanel extends JPanel {
     /**
      * @brief Carga una imagen estática en el visor
      * @param mf la referencia a la imagen
-     * @param gen el identificador de orden que debecoincidir con loadGen
+     * @param gen el identificador de orden que debe coincidir con loadGen
      */
     private void loadImage(MediaFile mf, int gen) {
         loading = true;
@@ -155,7 +157,7 @@ public class ViewerPanel extends JPanel {
     /**
      * @brief Carga una imagen animada (gif) en el visor
      * @param mf la referencia a la imagen
-     * @param gen el identificador de orden que debecoincidir con loadGen
+     * @param gen el identificador de orden que debe coincidir con loadGen
      */
     private void loadGif(MediaFile mf, int gen) {
         // Swing soporta GIF animado nativamente via ImageIcon — sin libs extra
@@ -206,7 +208,7 @@ public class ViewerPanel extends JPanel {
     }
 
     /**
-     * @brief Elimina el gifLabel actual si existiera
+     * @brief Elimina el gif actual (elimina gifLabel y para el gifTimer)
      */
     private void stopGif() {
         if (gifLabel != null) {
@@ -217,7 +219,7 @@ public class ViewerPanel extends JPanel {
         if (gifTimer != null) { gifTimer.stop(); gifTimer = null; }
     }
 
-    // ── Placeholder de video ──────────────────────────────────────────────────
+    // ── Video ────────────────────────────────────────────────────────────────
     /**
      * @brief Carga un placeholder en el panel si el video falla
      * @param mf la referencia al archivo seleccionado para apertura externa
@@ -264,6 +266,52 @@ public class ViewerPanel extends JPanel {
         add(ph, BorderLayout.CENTER);
         revalidate();
         repaint();
+    }
+
+    /**
+     * @brief Carga un video en el visor para reproducir con sus opciones de control
+     * @param mf la referencia al video
+     * @param gen el identificador de orden que debe coincidir con loadGen
+     */
+    private void loadVideo(MediaFile mf, int gen) {
+        loading = true;
+        spinTimer.start();
+        loader.submit(() -> {
+            try {
+                if (!mf.getFile().exists() || loadGen.get() != gen) return;
+                videoPanel = new VideoPanel(mf.getFile());
+
+                SwingUtilities.invokeLater(() -> {
+                    if (loadGen.get() != gen) return;
+                    loading = false;
+                    origImage = null; // no hay BufferedImage estática
+                    
+                    add(videoPanel, BorderLayout.CENTER);
+                    revalidate();
+                    repaint();
+                    /*int w = icon.getIconWidth();
+                    int h = icon.getIconHeight();
+                    infoText = "Video  " + w + " × " + h + " px";*/
+                    infoText = "Video";
+                    updateStatus(infoText);
+                });
+
+            } catch (Exception e) {
+                showVideoPlaceholder(mf);
+            }
+        });
+    }
+
+    /**
+     * @brief Elimina el video actual si existiera ()
+     */
+    private void stopVideo() {
+        if (videoPanel != null) {
+            videoPanel.dispose();
+            remove(videoPanel);
+            videoPanel = null;
+            revalidate();
+        }
     }
 
     // ── paintComponent ────────────────────────────────────────────────────────
@@ -322,7 +370,7 @@ public class ViewerPanel extends JPanel {
 
     private void drawCentered(Graphics2D g, String text, Color color, int size) {
         g.setColor(color);
-        g.setFont(new Font("Segoe UI", Font.PLAIN, size));
+        g.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, size));
         FontMetrics fm = g.getFontMetrics();
         int x = (getWidth()  - fm.stringWidth(text)) / 2;
         int y = (getHeight() + fm.getAscent()) / 2;
@@ -428,6 +476,7 @@ public class ViewerPanel extends JPanel {
         if (currentLoad != null) currentLoad.cancel(true);
         loadGen.incrementAndGet();
         stopGif();
+        stopVideo();
         origImage = null; scaledCache = null;
         loading = false;
         spinTimer.stop();

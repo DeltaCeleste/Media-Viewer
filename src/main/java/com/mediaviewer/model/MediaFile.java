@@ -1,4 +1,4 @@
-package com.mediavault.model;
+package com.mediaviewer.model;
 
 import java.io.File;
 import java.time.Instant;

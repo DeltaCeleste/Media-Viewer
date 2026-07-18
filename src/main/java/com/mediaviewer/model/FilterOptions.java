@@ -1,4 +1,4 @@
-package com.mediavault.model;
+package com.mediaviewer.model;
 
 /** Snapshot inmutable de los filtros activos. */
 public record FilterOptions(

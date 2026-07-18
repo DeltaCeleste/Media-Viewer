@@ -1,10 +1,10 @@
-package com.mediavault.engine;
+package com.mediaviewer.engine;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
-import com.mediavault.model.MediaFile;
+import com.mediaviewer.model.MediaFile;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

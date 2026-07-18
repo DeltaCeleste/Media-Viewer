@@ -1,7 +1,7 @@
-package com.mediavault.ui.panels;
+package com.mediaviewer.ui.panels;
 
-import com.mediavault.model.MediaFile;
-import com.mediavault.util.Theme;
+import com.mediaviewer.model.MediaFile;
+import com.mediaviewer.util.Theme;
 import net.coobird.thumbnailator.Thumbnails;
 
 import javax.swing.*;

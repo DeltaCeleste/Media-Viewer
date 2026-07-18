@@ -1,6 +1,6 @@
-package com.mediavault;
+package com.mediaviewer;
 
-import com.mediavault.ui.MainWindow;
+import com.mediaviewer.ui.MainWindow;
 
 import javax.swing.*;
 

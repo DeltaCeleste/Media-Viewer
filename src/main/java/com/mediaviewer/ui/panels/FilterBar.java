@@ -1,7 +1,7 @@
-package com.mediavault.ui.panels;
+package com.mediaviewer.ui.panels;
 
-import com.mediavault.model.FilterOptions;
-import com.mediavault.util.Theme;
+import com.mediaviewer.model.FilterOptions;
+import com.mediaviewer.util.Theme;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

@@ -1,4 +1,4 @@
-package com.mediavault.util;
+package com.mediaviewer.util;
 
 import java.awt.Color;
 import java.awt.Font;

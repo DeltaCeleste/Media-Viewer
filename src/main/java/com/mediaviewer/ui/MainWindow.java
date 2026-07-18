@@ -1,10 +1,10 @@
-package com.mediavault.ui;
+package com.mediaviewer.ui;
 
-import com.mediavault.engine.FileScanner;
-import com.mediavault.model.FilterOptions;
-import com.mediavault.model.MediaFile;
-import com.mediavault.ui.panels.*;
-import com.mediavault.util.Theme;
+import com.mediaviewer.engine.FileScanner;
+import com.mediaviewer.model.FilterOptions;
+import com.mediaviewer.model.MediaFile;
+import com.mediaviewer.ui.panels.*;
+import com.mediaviewer.util.Theme;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -17,7 +17,7 @@ import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
 /**
- * Ventana principal de MediaVault.
+ * Ventana principal de mediaviewer.
  *
  * Reglas de threading:
  *  ┌────────────────────────────────────────────────────────┐
