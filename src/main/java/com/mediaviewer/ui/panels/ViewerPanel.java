@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *  - paintComponent() solo lee campos volátiles.
  */
 public class ViewerPanel extends JPanel {
+    public static final int VIDEO_LOAD_TIME = 1000;
 
     // ── Estado compartido (volatile = visibilidad entre hilos) ───────────────
     private volatile BufferedImage origImage  = null;
@@ -83,7 +84,6 @@ public class ViewerPanel extends JPanel {
         // Cancelar carga anterior
         if (currentLoad != null && !currentLoad.isDone())
             currentLoad.cancel(true);
-        stopGif();
         origImage   = null;
         scaledCache = null;
         zoom        = 1.0;
@@ -108,8 +108,7 @@ public class ViewerPanel extends JPanel {
      * @param gen el identificador de orden que debe coincidir con loadGen
      */
     private void loadImage(MediaFile mf, int gen) {
-        loading = true;
-        spinTimer.start();
+        playSpinner();
         currentLoad = loader.submit(() -> {
             try {
                 BufferedImage img = ImageIO.read(mf.getFile());
@@ -129,8 +128,7 @@ public class ViewerPanel extends JPanel {
                 final BufferedImage finalImg = img;
                 SwingUtilities.invokeLater(() -> {
                     if (loadGen.get() != gen) return;
-                    loading = false;
-                    spinTimer.stop();
+                    stopSpinner();
                     origImage   = finalImg;
                     scaledCache = null;
                     zoom        = 1.0;
@@ -143,8 +141,7 @@ public class ViewerPanel extends JPanel {
             } catch (Exception e) {
                 if (loadGen.get() != gen) return;
                 SwingUtilities.invokeLater(() -> {
-                    loading  = false;
-                    spinTimer.stop();
+                    stopSpinner();
                     infoText = "Error: " + e.getMessage();
                     updateStatus(infoText);
                     repaint();
@@ -161,8 +158,7 @@ public class ViewerPanel extends JPanel {
      */
     private void loadGif(MediaFile mf, int gen) {
         // Swing soporta GIF animado nativamente via ImageIcon — sin libs extra
-        loading = true;
-        spinTimer.start();
+        playSpinner();
         loader.submit(() -> {
             try {
                 // Verificar que el archivo existe antes de proceder
@@ -177,8 +173,7 @@ public class ViewerPanel extends JPanel {
 
                 SwingUtilities.invokeLater(() -> {
                     if (loadGen.get() != gen) return;
-                    loading = false;
-                    spinTimer.stop();
+                    stopSpinner();
                     origImage = null; // no hay BufferedImage estática
                     // Mostrar con JLabel centrado
                     if (gifLabel != null) remove(gifLabel);
@@ -197,8 +192,7 @@ public class ViewerPanel extends JPanel {
                 if (loadGen.get() != gen) return;
                 // Fallback: cargar primer frame como imagen estática
                 SwingUtilities.invokeLater(() -> {
-                    loading  = false;
-                    spinTimer.stop();
+                    stopSpinner();
                     infoText = "GIF (error animación): " + e.getMessage();
                     updateStatus(infoText);
                     repaint();
@@ -225,8 +219,7 @@ public class ViewerPanel extends JPanel {
      * @param mf la referencia al archivo seleccionado para apertura externa
      */
     private void showVideoPlaceholder(MediaFile mf) {
-        loading  = false;
-        spinTimer.stop();
+        stopSpinner();
         origImage = null;
         stopGif();
         infoText = "Video — " + mf.getHumanSize();
@@ -274,30 +267,36 @@ public class ViewerPanel extends JPanel {
      * @param gen el identificador de orden que debe coincidir con loadGen
      */
     private void loadVideo(MediaFile mf, int gen) {
-        loading = true;
-        spinTimer.start();
+        playSpinner();
         loader.submit(() -> {
             try {
                 if (!mf.getFile().exists() || loadGen.get() != gen) return;
-                videoPanel = new VideoPanel(mf.getFile());
-
                 SwingUtilities.invokeLater(() -> {
-                    if (loadGen.get() != gen) return;
-                    loading = false;
-                    origImage = null; // no hay BufferedImage estática
-                    
-                    add(videoPanel, BorderLayout.CENTER);
-                    revalidate();
-                    repaint();
-                    /*int w = icon.getIconWidth();
-                    int h = icon.getIconHeight();
-                    infoText = "Video  " + w + " × " + h + " px";*/
-                    infoText = "Video";
-                    updateStatus(infoText);
+                    try {
+                        origImage = null; // no hay BufferedImage estática
+                        videoPanel = new VideoPanel(mf.getFile(), loadGen, this::showVideoPlaceholder);
+                        videoPanel.setStatusLabel(statusLabel);
+                        if (loadGen.get() != gen) return;
+                            try {
+                                add(videoPanel, BorderLayout.CENTER);
+                                revalidate();
+                                repaint();
+                                infoText = "Video";
+                                updateStatus(infoText);
+                                stopSpinner();
+                            } catch (Exception e) {
+                                System.out.println(e.getMessage());
+                                showVideoPlaceholder(mf);
+                            }               
+                    } catch (Exception e) {
+                        showVideoPlaceholder(mf);
+                        System.err.println(e);
+                    }
                 });
 
             } catch (Exception e) {
                 showVideoPlaceholder(mf);
+                System.err.println(e);
             }
         });
     }
@@ -311,6 +310,7 @@ public class ViewerPanel extends JPanel {
             remove(videoPanel);
             videoPanel = null;
             revalidate();
+            repaint();
         }
     }
 
@@ -437,6 +437,22 @@ public class ViewerPanel extends JPanel {
         spinTimer.setRepeats(true);
     }
 
+    /**
+     * @brief Reproduce el spinner
+     */
+    private void playSpinner() {
+        loading = true;
+        spinTimer.start();
+    }
+
+    /**
+     * @brief Detiene el spinner
+     */
+    private void stopSpinner() {
+        loading = false;
+        spinTimer.stop();
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
     /**
      * @brief Abre externamente el archivo seleccionado
@@ -478,8 +494,7 @@ public class ViewerPanel extends JPanel {
         stopGif();
         stopVideo();
         origImage = null; scaledCache = null;
-        loading = false;
-        spinTimer.stop();
+        stopSpinner();
         removeAll();
         revalidate();
         repaint();

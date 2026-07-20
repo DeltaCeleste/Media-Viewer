@@ -1,6 +1,8 @@
 package com.mediaviewer.ui.panels;
 
+import com.mediaviewer.model.MediaFile;
 import com.mediaviewer.util.Theme;
+import com.mediaviewer.util.InitException;
 
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -10,6 +12,10 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +41,17 @@ public class VideoPanel extends JPanel {
     private boolean isPlaying = false;
     private boolean isDragging = false;
 
-    public VideoPanel(File videoPath) {
+    // Control
+    private CompletableFuture<Void> futuroInicializacion = new CompletableFuture<>();
+    private volatile InitException excepcionInicializacion = null;
+
+    // Callcack
+    private JLabel statusLabel;   // inyectado desde fuera
+    public void setStatusLabel(JLabel lbl) { this.statusLabel = lbl; }
+
+
+    public VideoPanel(File videoPath, AtomicInteger gen, Consumer<MediaFile> onFallo) throws Exception {
+        int preGen = gen.get();
         setLayout(new BorderLayout());
         setBackground(Theme.BG);
 
@@ -47,15 +63,99 @@ public class VideoPanel extends JPanel {
         JPanel controlsPanel = createControlsPanel();
         add(controlsPanel, BorderLayout.SOUTH);
 
-        jfxPanel.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                updateMediaViewSize();
-            }
-        });
+        if(gen.get() == preGen){
+            jfxPanel.addComponentListener(new ComponentAdapter() {
+                @Override
+                public void componentResized(ComponentEvent e) {
+                    updateMediaViewSize();
+                }
+            });
+            excepcionInicializacion = new InitException("Inicialización para comenzar pero no comenzada");
+            Platform.setImplicitExit(false);
+            Platform.runLater(() -> {
+                try{
+                    initFX(videoPath, gen, preGen, onFallo);
+                } catch (Exception e) {
+                    excepcionInicializacion = new InitException(e.getMessage(), -1);
+                }
+            });
+        }  
 
-        // 2. Inicializar el reproductor en el hilo de JavaFX
-        Platform.runLater(() -> initFX(videoPath));
+    }
+
+    /**
+     * @brief Inicializa el video y el panel adaptable
+     * @param videoFile el archivo a cargar
+     */
+    private void initFX(File videoFile, AtomicInteger gen, int preGen, Consumer<MediaFile> onFallo) throws Exception {
+        excepcionInicializacion = new InitException("Inicialización correctamente en proceso pero no acabada", 1);
+        try{
+            if (!videoFile.exists()) {
+                System.err.println("El archivo de video no existe: " + videoFile);
+                throw new Exception("El archivo de video no existe");
+            }
+
+            if(gen.get() != preGen){ return; }
+
+            Media media = new Media(videoFile.toURI().toString());
+            mediaPlayer = new MediaPlayer(media);
+
+            media.setOnError(() -> {
+                System.err.println("Fallo en la creación de la media");
+                excepcionInicializacion = new InitException("Fallo al crear media", -1);
+            });
+
+            mediaPlayer.setOnReady(() -> {
+                Platform.runLater(() -> {
+                    try{
+                        mediaView = new MediaView(mediaPlayer);
+                        mediaView.setPreserveRatio(true);
+
+                        root = new StackPane();
+                        root.setStyle("-fx-background-color: black;");
+                        root.getChildren().add(mediaView);
+
+                        Scene scene = new Scene(root);
+                        jfxPanel.setScene(scene);
+
+                        SwingUtilities.invokeLater(this::updateMediaViewSize);
+
+                        setupMediaListeners();
+
+                        futuroInicializacion.complete(null);
+                        excepcionInicializacion = null;
+
+                        // El Media está listo, su duración ya está disponible.
+                        statusLabel.setText("Video - " + formatDuration(mediaPlayer.getTotalDuration()));
+                    } catch (Exception e) {
+                        onFallo.accept(new MediaFile(videoFile));
+                    }
+                    
+                });
+            });
+        } catch (Exception e) {
+            futuroInicializacion.completeExceptionally(e);
+            throw e;
+        }
+        
+    }
+
+    /**
+     * @brief función cerrojo para asegurar la inicialización antes de acceder a datos
+     */
+    public void esperarInicializacion(int time) throws InitException {
+        try {
+            futuroInicializacion.get(time, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw excepcionInicializacion;
+        }
+    }
+
+    public boolean inicializado() {
+        if(excepcionInicializacion == null){
+            return true;
+        }
+        return false;
     }
 
     private JPanel createControlsPanel() {
@@ -127,32 +227,9 @@ public class VideoPanel extends JPanel {
         return panel;
     }
 
-    private void initFX(File videoFile) {
-        if (!videoFile.exists()) {
-            System.err.println("El archivo de video no existe: " + videoFile);
-            return;
-        }
-
-        Media media = new Media(videoFile.toURI().toString());
-        mediaPlayer = new MediaPlayer(media);
-
-        // 4. Crear la vista de video
-        mediaView = new MediaView(mediaPlayer);
-        mediaView.setPreserveRatio(true);
-
-        // 6. Crear la escena y mostrarla en el JFXPanel
-        root = new StackPane();
-        root.setStyle("-fx-background-color: black;");
-        root.getChildren().add(mediaView);
-
-        Scene scene = new Scene(root);
-        jfxPanel.setScene(scene);
-
-        SwingUtilities.invokeLater(this::updateMediaViewSize);
-
-        setupMediaListeners();
-    }
-
+    /**
+     * @brief Establece los listenners para la barra de progreso y el autofinalizar el video
+     */
     private void setupMediaListeners() {
         // Listener para actualizar el tiempo y la barra de progreso
         mediaPlayer.currentTimeProperty().addListener((obs, oldVal, newVal) -> {
@@ -179,7 +256,9 @@ public class VideoPanel extends JPanel {
     }
 
     // ── Adaptación de tamaño ──────────────────────────────────────────────────────
-
+    /**
+     * @brief actualiza el tamaño del video en función del del panel
+     */
     private void updateMediaViewSize() {
         if (mediaView != null && jfxPanel != null) {
             Platform.runLater(() -> {
@@ -209,7 +288,9 @@ public class VideoPanel extends JPanel {
     }
 
     // ── Controles ────────────────────────────────────────────────────────────────
-
+    /**
+     * @brief Si el video esta empezado lo pausa y si está pausado lo reanuda, cambiando el botón en su proceso
+     */
     private void togglePlayPause() {
         if (mediaPlayer == null) return;
         
@@ -234,7 +315,7 @@ public class VideoPanel extends JPanel {
             SwingUtilities.invokeLater(() -> {
                 playPauseButton.setText("▶");
                 progressSlider.setValue(0);
-                timeLabel.setText("00:00 / 00:00");
+                timeLabel.setText("00:00:00 / 00:00:00");
             });
         });
     }
@@ -285,16 +366,22 @@ public class VideoPanel extends JPanel {
         );
     }
 
+    /**
+     * @brief formatea una duración a formato hh:mm:ss
+     */
     private String formatDuration(Duration duration) {
-        if (duration == null) return "00:00";
+        if (duration == null) return "00:00:00";
         long seconds = (long) duration.toSeconds();
+        long hours = seconds / (60*60);
         long mins = seconds / 60;
         long secs = seconds % 60;
-        return String.format("%02d:%02d", mins, secs);
+        return String.format("%02d:%02d:%02d", hours, mins, secs);
     }
 
     // ── Controles del mediaplayer ───────────────────────────────────────────────────
-
+    /**
+     * @brief Reproduce el video desde el mediaplayer
+     */
     public void play() {
         Platform.runLater(() -> mediaPlayer.play());
     }
@@ -314,6 +401,15 @@ public class VideoPanel extends JPanel {
     }
 
     // ── Otros ────────────────────────────────────────────────────────────────
+    public String getCurrentVidDurationStr() throws Exception{ 
+        try{
+            esperarInicializacion(5); 
+            return formatDuration(mediaPlayer.getTotalDuration()); 
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+    
     /**
      * @brief Para el video y elimina el mediaplayer
      */
