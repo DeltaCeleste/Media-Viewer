@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.List;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Ventana principal de mediaviewer.
@@ -58,6 +59,9 @@ public class MainWindow extends JFrame {
     private JLabel         scanLabel;
     private JLabel         posLabel;
     private JLabel         viewerStatus;
+
+    // ── Control ─────────────────────────────────────────────────────────────
+    private final AtomicInteger scanLabelInteger = new AtomicInteger(0);
 
     public MainWindow() {
         super("Meδia Viewer");
@@ -322,6 +326,9 @@ public class MainWindow extends JFrame {
         FilterOptions opts = filterBar.get();
         scanLabel.setText("Escaneando…");
 
+        scanLabelInteger.incrementAndGet();
+        int scanGen = scanLabelInteger.get();
+
         activeScanner = new FileScanner(
             currentDir,
             opts.typeFilter(),
@@ -329,7 +336,11 @@ public class MainWindow extends JFrame {
             files -> {                       // onDone — ya en EDT via done()
                 allFiles = files;
                 scanLabel.setText(files.size() + " archivos encontrados");
-                Timer t = new Timer(SHOW_SCAN_TIME, e -> scanLabel.setText(""));
+                Timer t = new Timer(SHOW_SCAN_TIME, e -> {
+                    if(scanLabelInteger.get() == scanGen){
+                        scanLabel.setText("");   
+                    }
+            });
                 t.setRepeats(false); t.start();
                 applyFilters();
             },

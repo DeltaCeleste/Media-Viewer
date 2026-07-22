@@ -47,6 +47,7 @@ public class VideoPanel extends JPanel {
 
     // Callcack
     private JLabel statusLabel;   // inyectado desde fuera
+    
     public void setStatusLabel(JLabel lbl) { this.statusLabel = lbl; }
 
 
