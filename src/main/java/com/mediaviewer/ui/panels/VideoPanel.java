@@ -47,7 +47,7 @@ public class VideoPanel extends JPanel {
 
     // Callcack
     private JLabel statusLabel;   // inyectado desde fuera
-    
+
     public void setStatusLabel(JLabel lbl) { this.statusLabel = lbl; }
 
 
@@ -104,6 +104,14 @@ public class VideoPanel extends JPanel {
             media.setOnError(() -> {
                 System.err.println("Fallo en la creación de la media");
                 excepcionInicializacion = new InitException("Fallo al crear media", -1);
+                onFallo.accept(new MediaFile(videoFile));
+            });
+
+            mediaPlayer.setOnError(() -> {
+                String msg = "Fallo en la creación del mediaPlayer: " + mediaPlayer.getError().getMessage();
+                System.err.println(msg);
+                excepcionInicializacion = new InitException(msg, -1);
+                onFallo.accept(new MediaFile(videoFile));
             });
 
             mediaPlayer.setOnReady(() -> {
