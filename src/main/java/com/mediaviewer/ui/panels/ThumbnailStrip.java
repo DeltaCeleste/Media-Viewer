@@ -110,15 +110,15 @@ public class ThumbnailStrip extends JPanel {
 
         // Label para imagen
         JLabel imgLbl = new JLabel("…", SwingConstants.CENTER);
-        imgLbl.setForeground(Theme.DIM);
-        imgLbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        imgLbl.setForeground(Theme.TEXT2);
+        imgLbl.setFont(Theme.FONT_BIG);
         imgLbl.setPreferredSize(new Dimension(TW, TH));
         imgLbl.setHorizontalAlignment(SwingConstants.CENTER);
 
         // Label de nombre
         JLabel nameLbl = new JLabel(truncate(mf.getName(), 14), SwingConstants.CENTER);
-        nameLbl.setFont(new Font("Segoe UI", Font.PLAIN, 8));
-        nameLbl.setForeground(Theme.DIM);
+        nameLbl.setFont(Theme.FONT_SMALL);
+        nameLbl.setForeground(Theme.TEXT2);
 
         cell.add(imgLbl, BorderLayout.CENTER);
         cell.add(nameLbl, BorderLayout.SOUTH);
@@ -230,8 +230,9 @@ public class ThumbnailStrip extends JPanel {
         if (cells == null) return;
         for (int i = 0; i < cells.length; i++) {
             if (cells[i] == null) continue;
-            Color bg = (i == idx) ? Theme.HL : Theme.BG;
-            setAllBg(cells[i], bg);
+            Color bg  = (i == idx) ? Theme.HL2 : Theme.BG;
+            Color txt = (i == idx) ? Theme.TEXT3 : Theme.TEXT2;
+            setAllBg(cells[i], bg, txt);
         }
     }
 
@@ -240,11 +241,12 @@ public class ThumbnailStrip extends JPanel {
      * @param c El contenedor actual
      * @param bg El color de fondo al que se va a cambiar
      */
-    private void setAllBg(Container c, Color bg) {
+    private void setAllBg(Container c, Color bg, Color txt) {
         c.setBackground(bg);
         for (Component ch : c.getComponents()) {
             ch.setBackground(bg);
-            if (ch instanceof Container) setAllBg((Container)ch, bg);
+            if (ch instanceof Container) setAllBg((Container)ch, bg, txt);
+            if (ch instanceof JLabel) ch.setForeground(txt);
         }
     }
 

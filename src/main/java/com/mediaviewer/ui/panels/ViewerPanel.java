@@ -234,12 +234,12 @@ public class ViewerPanel extends JPanel {
         c.gridy = 0;
         JLabel ico = new JLabel("🎬", SwingConstants.CENTER);
         ico.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 72));
-        ico.setForeground(Theme.DIM);
+        ico.setForeground(Theme.TEXT2);
         ph.add(ico, c);
 
         c.gridy = 1;
         JLabel nameLbl = new JLabel(mf.getName(), SwingConstants.CENTER);
-        nameLbl.setFont(Theme.FONT_MED);
+        nameLbl.setFont(Theme.FONT_SMALL);
         nameLbl.setForeground(Theme.TEXT);
         ph.add(nameLbl, c);
 
@@ -247,7 +247,7 @@ public class ViewerPanel extends JPanel {
         JLabel hint = new JLabel("Doble clic o botón para abrir con el sistema",
                                   SwingConstants.CENTER);
         hint.setFont(Theme.FONT_SMALL);
-        hint.setForeground(Theme.DIM);
+        hint.setForeground(Theme.TEXT2);
         ph.add(hint, c);
 
         c.gridy = 3;

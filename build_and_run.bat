@@ -50,4 +50,3 @@ echo.
 echo  Ejecutando la aplicacion...
 java --enable-native-access=ALL-UNNAMED -jar target\MediaViewer-2.0.jar
 
-pause

@@ -121,7 +121,7 @@ public class VideoPanel extends JPanel {
                         mediaView.setPreserveRatio(true);
 
                         root = new StackPane();
-                        root.setStyle("-fx-background-color: black;");
+                        root.setStyle("-fx-background-color: " + Theme.VIDEO_PLAYER + ";");
                         root.getChildren().add(mediaView);
 
                         Scene scene = new Scene(root);
@@ -169,13 +169,16 @@ public class VideoPanel extends JPanel {
 
     private JPanel createControlsPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        panel.setBackground(new Color(50, 50, 50));
+        panel.setBackground(Theme.PANEL);
         
         // --- Botón Play/Pause ---
         playPauseButton = new JButton("▶");
         playPauseButton.setFont(new Font(Theme.FONT_SYMBOL, Font.BOLD, 16));
-        playPauseButton.setForeground(Color.WHITE);
-        playPauseButton.setBackground(new Color(70, 70, 70));
+        playPauseButton.setForeground(Theme.TEXT);
+        playPauseButton.setBackground(Theme.ACCENT);
+        playPauseButton.setOpaque(true);
+        playPauseButton.setBorderPainted(false);
+        playPauseButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         playPauseButton.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         playPauseButton.addActionListener(e -> togglePlayPause());
         panel.add(playPauseButton);
@@ -183,8 +186,10 @@ public class VideoPanel extends JPanel {
         // --- Botón Stop ---
         stopButton = new JButton("⏹");
         stopButton.setFont(new Font(Theme.FONT_SYMBOL, Font.BOLD, 16));
-        stopButton.setForeground(Color.WHITE);
-        stopButton.setBackground(new Color(70, 70, 70));
+        stopButton.setForeground(Theme.TEXT);
+        stopButton.setBackground(Theme.ACCENT);
+        stopButton.setOpaque(true);
+        stopButton.setBorderPainted(false);
         stopButton.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         stopButton.addActionListener(e -> stopVideo());
         panel.add(stopButton);
@@ -192,7 +197,7 @@ public class VideoPanel extends JPanel {
         // --- Barra de progreso ---
         progressSlider = new JSlider(0, 100, 0);
         progressSlider.setPreferredSize(new Dimension(250, 20));
-        progressSlider.setBackground(new Color(50, 50, 50));
+        progressSlider.setBackground(Theme.BG);
         progressSlider.addChangeListener(e -> {
             if (progressSlider.getValueIsAdjusting()) {
                 isDragging = true;
@@ -204,19 +209,19 @@ public class VideoPanel extends JPanel {
         panel.add(progressSlider);
         
         // --- Etiqueta de tiempo ---
-        timeLabel = new JLabel("00:00 / 00:00");
-        timeLabel.setForeground(Color.WHITE);
+        timeLabel = new JLabel("00:00:00 / 00:00:00");
+        timeLabel.setForeground(Theme.TEXT);
         timeLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
         panel.add(timeLabel);
         
         // --- Control de volumen ---
         JLabel volumeIcon = new JLabel("🔊");
-        volumeIcon.setForeground(Color.WHITE);
+        volumeIcon.setForeground(Theme.TEXT);
         panel.add(volumeIcon);
         
         volumeSlider = new JSlider(0, 100, 100);
         volumeSlider.setPreferredSize(new Dimension(80, 20));
-        volumeSlider.setBackground(new Color(50, 50, 50));
+        volumeSlider.setBackground(Theme.BG);
         volumeSlider.addChangeListener(e -> {
             if (!volumeSlider.getValueIsAdjusting()) {
                 setVolume(volumeSlider.getValue() / 100.0);
@@ -226,9 +231,11 @@ public class VideoPanel extends JPanel {
         
         // --- Botón Pantalla Completa (opcional) ---
         fullScreenButton = new JButton("⛶");
-        fullScreenButton.setFont(new Font("Arial", Font.BOLD, 16));
-        fullScreenButton.setForeground(Color.WHITE);
-        fullScreenButton.setBackground(new Color(70, 70, 70));
+        fullScreenButton.setFont(new Font(Theme.FONT_SYMBOL, Font.BOLD, 16));
+        fullScreenButton.setForeground(Theme.TEXT);
+        fullScreenButton.setBackground(Theme.ACCENT);
+        fullScreenButton.setOpaque(true);
+        fullScreenButton.setBorderPainted(false);
         fullScreenButton.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         fullScreenButton.addActionListener(e -> toggleFullScreen());
         panel.add(fullScreenButton);

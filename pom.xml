@@ -76,6 +76,12 @@
             <artifactId>javafx-controls</artifactId>
             <version>${javafx.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf-extras</artifactId>
+            <version>3.5.4</version> <!-- O la misma versión que estés usando de flatlaf -->
+        </dependency>
     </dependencies>
 
     <build>

@@ -6,6 +6,7 @@ import com.mediaviewer.model.MediaFile;
 import com.mediaviewer.ui.panels.*;
 import com.mediaviewer.util.Theme;
 
+import com.formdev.flatlaf.extras.FlatInspector;
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
@@ -71,6 +72,7 @@ public class MainWindow extends JFrame {
         setLocationRelativeTo(null);
         setBackground(Theme.BG);
 
+        FlatInspector.install("ctrl shift alt F");
         applyLookAndFeel();
         buildUI();
         bindKeys();
@@ -93,25 +95,25 @@ public class MainWindow extends JFrame {
     private void buildUI() {
         // ── Barra superior ──
         JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 7));
-        topBar.setBackground(Theme.HL2);
+        topBar.setBackground(Theme.PANEL);
 
         JLabel logo = new JLabel("Meδia Viewer");
         logo.setForeground(Theme.TEXT);
-        logo.setFont(new Font(Theme.FONT_SYMBOL, Font.BOLD, 14));
+        logo.setFont(Theme.FONT_MED_BOLD);
         topBar.add(logo);
 
-        JButton openBtn = accentButton("Abrir carpeta");
+        JButton openBtn = highlightButton("Abrir carpeta");
         openBtn.addActionListener(evt -> chooseDirectory());
         topBar.add(openBtn);
 
         dirLabel = new JLabel("Sin carpeta — Ctrl+O para abrir");
-        dirLabel.setForeground(Theme.DIM);
-        dirLabel.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 10));
+        dirLabel.setForeground(Theme.TEXT2);
+        dirLabel.setFont(Theme.FONT_SMALL);
         topBar.add(dirLabel);
 
         scanLabel = new JLabel("");
         scanLabel.setForeground(Theme.SUCCESS);
-        scanLabel.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 10));
+        scanLabel.setFont(Theme.FONT_SMALL);
         // empujar a la derecha
         topBar.add(Box.createHorizontalStrut(30));
         topBar.add(scanLabel);
@@ -123,13 +125,13 @@ public class MainWindow extends JFrame {
         add(filterBar, BorderLayout.AFTER_LAST_LINE); // provisional, se reordena
 
         // ── Panel principal (split) ──
-        viewer    = new ViewerPanel();
+        viewer = new ViewerPanel();
         viewerStatus = new JLabel("Selecciona una carpeta para empezar");
-        viewerStatus.setForeground(Theme.DIM);
-        viewerStatus.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 10));
+        viewerStatus.setForeground(Theme.TEXT2);
+        viewerStatus.setFont(Theme.FONT_SMALL);
         viewer.setStatusLabel(viewerStatus);
 
-        fileList  = new FileListPanel(this::selectByIndex);
+        /*fileList  = new FileListPanel(this::selectByIndex);
         metaPanel = new MetadataPanel(this::onSaved);
 
         JSplitPane leftSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
@@ -145,13 +147,14 @@ public class MainWindow extends JFrame {
         mainSplit.setDividerSize(5);
         mainSplit.setBorder(null);
         mainSplit.setBackground(Theme.BG);
-        mainSplit.setResizeWeight(1.0);
+        mainSplit.setResizeWeight(1.0);*/
 
         // Layout con filtros arriba y split en centro
         JPanel body = new JPanel(new BorderLayout());
         body.setBackground(Theme.BG);
         body.add(filterBar, BorderLayout.NORTH);
-        body.add(mainSplit, BorderLayout.CENTER);
+        //body.add(mainSplit, BorderLayout.CENTER);
+        body.add(buildCenterPanel(), BorderLayout.CENTER);
         add(body, BorderLayout.CENTER);
 
         // ── Barra inferior (navegación) ──
@@ -170,6 +173,7 @@ public class MainWindow extends JFrame {
 
         JPanel center = new JPanel(new BorderLayout());
         center.setBackground(Theme.BG);
+        center.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER));
 
         // Status bar del visor (debajo del canvas)
         JPanel viewerBar = new JPanel(new GridLayout());
@@ -193,6 +197,7 @@ public class MainWindow extends JFrame {
         viewerBar.add(viewerStatus);
         viewerBar.add(zoomButtons); 
         viewerBar.add(Box.createHorizontalStrut(viewerStatus.getWidth()));
+        viewerBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER));
 
         center.add(viewer,    BorderLayout.CENTER);
         center.add(viewerBar, BorderLayout.SOUTH);
@@ -205,26 +210,30 @@ public class MainWindow extends JFrame {
      * @return El panel construido
      */
     private JPanel buildNavBar() {
-        JPanel nav = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
+        JPanel nav = new JPanel(new GridLayout());
         nav.setBackground(Theme.PANEL);
         nav.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER));
 
-        nav.setLayout(new BorderLayout());
+        //nav.setLayout(new BorderLayout());
 
-        // Botones Izquierdos
-        JPanel leftNav = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
-        leftNav.setBackground(Theme.PANEL);
+        // Botones centrales
+        JPanel center = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+        center.setBackground(Theme.PANEL);
         for (String[] b : new String[][]{{"⏮","first"},{"◀","prev"},{"▶","next"},{"⏭","last"}}) {
             JButton btn = new JButton(b[0]);
-            styleNavBtn(btn);
+            styleBtn(btn);
             btn.addActionListener(evt -> handleNav(b[1]));
-            leftNav.add(btn);
+            center.add(btn);
         }
-        leftNav.add(Box.createHorizontalStrut(10));
+
+        // Botones Izquierdos
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
+        left.setBackground(Theme.PANEL);
+        left.add(Box.createHorizontalStrut(10));
         posLabel = new JLabel("—");
-        posLabel.setForeground(Theme.DIM);
-        posLabel.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 11));
-        leftNav.add(posLabel);
+        posLabel.setForeground(Theme.TEXT2);
+        posLabel.setFont(Theme.FONT_SMALL);
+        left.add(posLabel);
 
         // Botones derechos
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 6));
@@ -240,24 +249,10 @@ public class MainWindow extends JFrame {
         delete.addActionListener(evt -> deleteCurrentFile());
         right.add(delete);
 
-        nav.add(leftNav, BorderLayout.WEST);
-        nav.add(right, BorderLayout.EAST);
+        nav.add(left);
+        nav.add(center);
+        nav.add(right);
         return nav;
-    }
-
-    /**
-     * @brief Aplica un estilo predefinido (Estilo de navegación) a un botón 
-     * @param b el botón
-     */
-    private void styleNavBtn(JButton b) {
-        b.setBackground(Theme.ACCENT);
-        b.setForeground(Theme.TEXT);
-        b.setFont(new Font(Theme.FONT_SYMBOL, Font.BOLD, 14));
-        b.setBorderPainted(false);
-        b.setFocusPainted(false);
-        b.setOpaque(true);
-        b.setPreferredSize(new Dimension(44, 32));
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     // ── Teclas ────────────────────────────────────────────────────────────────
@@ -318,7 +313,9 @@ public class MainWindow extends JFrame {
     }
 
     // ── Escaneo (en SwingWorker — nunca bloquea EDT) ──────────────────────────
-
+    /**
+     * @brief Comienza un escaneo en el directorio actualmente seleccionado y carga los componentes correspondientes con el resultado
+     */
     private void startScan() {
         if (currentDir == null) return;
         if (activeScanner != null) activeScanner.stop();
@@ -396,13 +393,14 @@ public class MainWindow extends JFrame {
 
         filtered = items;
         filterBar.setCount(filtered.size(), allFiles.size());
-        fileList.populate(filtered);
+        //fileList.populate(filtered);
         thumbStrip.populate(filtered, idx);
 
         if (!filtered.isEmpty()) selectByIndex(idx);
         else {
             currentIdx = -1;
             viewer.clear();
+            viewerStatus.setText("—");
             posLabel.setText("—");
         }
     }
@@ -420,16 +418,17 @@ public class MainWindow extends JFrame {
      */
     public void selectByIndex(int idx) {
         if (filtered.isEmpty()) return;
+
         idx = Math.max(0, Math.min(idx, filtered.size() - 1));
-        //if (idx == currentIdx) return;
+        int prevIdx = currentIdx; // Si venimos de currentIdx = -1, el viewer panel debería estar vacío 
         currentIdx = idx;
         MediaFile mf = filtered.get(idx);
 
-        if (mf == viewer.getCurrent()) return;
+        if (mf == viewer.getCurrent() && prevIdx != -1) return;
 
         viewer.load(mf);
-        metaPanel.load(mf);
-        fileList.highlight(idx);
+        //metaPanel.load(mf);
+        //fileList.highlight(idx);
         thumbStrip.highlight(idx);
         posLabel.setText((idx + 1) + " / " + filtered.size() + "   " + mf.getName());
     }
@@ -517,17 +516,29 @@ public class MainWindow extends JFrame {
 
     // ── Helpers de estilo ─────────────────────────────────────────────────────
     /**
-     * @brief Crea un botón de acento
-     * @param text El texto del botón
+     * @brief Aplica un estilo predefinido (Estilo de navegación) a un botón 
+     * @param b el botón
      */
-    private static JButton accentButton(String text) {
-        JButton b = new JButton(text);
-        b.setBackground(Theme.HL);
-        b.setForeground(Color.WHITE);
-        b.setFont(new Font(Theme.FONT_SYMBOL, Font.BOLD, 11));
+    private void styleBtn(JButton b) {
+        b.setBackground(Theme.ACCENT);
+        b.setForeground(Theme.TEXT);
+        b.setFont(Theme.FONT_MED_BOLD);
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setOpaque(true);
+        b.setPreferredSize(new Dimension(44, 32));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
+
+    /**
+     * @brief Crea un botón de acento
+     * @param text El texto del botón
+     */
+    private static JButton highlightButton(String text) {
+        JButton b = new JButton(text);
+        b.setBackground(Theme.HL);
+        b.setForeground(Theme.TEXT3);
+        b.setFont(Theme.FONT_SMALL_BOLD);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return b;
     }
@@ -539,7 +550,7 @@ public class MainWindow extends JFrame {
     private static JButton ghostButton(String text) {
         JButton b = new JButton(text);
         b.setBackground(Theme.PANEL);
-        b.setForeground(Theme.DIM);
+        b.setForeground(Theme.TEXT2);
         b.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 10));
         b.setBorderPainted(false);
         b.setFocusPainted(false);
@@ -554,18 +565,64 @@ public class MainWindow extends JFrame {
      */
     private static void applyLookAndFeel() {
         try {
-            // FlatLaf si está disponible, si no Nimbus, si no el del sistema
+            // Intentar cargar FlatLaf (Dark o Light) por reflexión o directamente
+            boolean loaded = false;
             try {
+                // Si tienes el JAR de FlatLaf en tu classpath:
+                UIManager.setLookAndFeel("com.formdev.flatlaf.FlatDarkLaf"); 
+                loaded = true;
+                System.out.println("Flatlaf loaded");
+            } catch (Exception e) {
+                // Si no está FlatLaf, intentamos Nimbus
+                try {
+                    for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                        if ("Nimbus".equals(info.getName())) {
+                            UIManager.setLookAndFeel(info.getClassName());
+                            loaded = true;
+                            System.out.println("Flatlaf loaded");
+                            break;
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            // Si fallaron los anteriores, cae al del sistema
+            if (!loaded) {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {}
-            // Colores globales de Swing
-            UIManager.put("Panel.background",           Theme.PANEL);
-            UIManager.put("ScrollBar.background",       Theme.ACCENT);
-            UIManager.put("ScrollBar.thumb",            Theme.HL2);
-            UIManager.put("ComboBox.background",        Theme.INPUT);
-            UIManager.put("ComboBox.foreground",        Theme.TEXT);
-            UIManager.put("OptionPane.background",      Theme.PANEL);
+                System.out.println("System look loaded");
+            }
+
+            // Colores globales (SE APLICAN DESPUÉS DE ESTABLECER EL LOOK AND FEEL)
+            UIManager.put("Panel.background",            Theme.PANEL);
+            UIManager.put("ScrollBar.background",        Theme.ACCENT);
+            UIManager.put("ScrollBar.thumb",             Theme.HL);
+            
+            // Claves globales para ComboBox
+            UIManager.put("ComboBox.background",          Theme.INPUT);
+            UIManager.put("ComboBox.foreground",          Theme.TEXT);
+            UIManager.put("ComboBox.popupBackground",     Theme.PANEL);
+            UIManager.put("ComboBox.focusedBackground",   Theme.HL2);
+            UIManager.put("ComboBox.selectionBackground", Theme.HL2);
+            UIManager.put("ComboBox.selectionForeground", Theme.TEXT);
+            // Color de selección en la lista desplegable (por si usa el componente List)
+            UIManager.put("List.selectionBackground",     Theme.HL2);
+            UIManager.put("List.selectionForeground",     Theme.TEXT);
+            UIManager.put("Component.focusColor",         Theme.ACCENT);
+
+            // Claves para las checkboxes
+            UIManager.put("CheckBox.icon.borderColor",        Theme.BORDER);
+            UIManager.put("CheckBox.icon.background",         Theme.INPUT);
+            UIManager.put("CheckBox.icon.selectedBackground", Theme.INPUT);
+            UIManager.put("CheckBox.icon.checkmarkColor",     Theme.HL2);
+
+            // Claves globales para Botones
+            UIManager.put("Button.arc", 0);
+            UIManager.put("Button.background", Theme.ACCENT);
+            UIManager.put("Button.foreground", Theme.TEXT);
+            
+            UIManager.put("OptionPane.background",       Theme.PANEL);
             UIManager.put("OptionPane.messageForeground",Theme.TEXT);
+
         } catch (Exception ignored) {}
     }
 }

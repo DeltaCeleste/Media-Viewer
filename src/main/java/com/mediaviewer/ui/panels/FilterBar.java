@@ -30,7 +30,8 @@ public class FilterBar extends JPanel {
 
         // Icono búsqueda
         JLabel searchIco = new JLabel("🔍");
-        searchIco.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+        searchIco.setFont(new Font(Theme.FONT_EMOJI, Font.PLAIN, 14));
+        searchIco.setForeground(Theme.TEXT);
         add(searchIco);
 
         // Campo de texto
@@ -38,7 +39,7 @@ public class FilterBar extends JPanel {
         searchField.setBackground(Theme.INPUT);
         searchField.setForeground(Theme.TEXT);
         searchField.setCaretColor(Theme.TEXT);
-        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        searchField.setFont(Theme.FONT_SMALL);
         searchField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(Theme.BORDER),
             BorderFactory.createEmptyBorder(3, 6, 3, 6)));
@@ -69,19 +70,21 @@ public class FilterBar extends JPanel {
         recursiveBox = new JCheckBox("Subcarpetas");
         recursiveBox.setBackground(Theme.PANEL);
         recursiveBox.setForeground(Theme.TEXT);
-        recursiveBox.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        recursiveBox.setFont(Theme.FONT_SMALL);
         recursiveBox.addActionListener(e -> onChanged.run());
         add(recursiveBox);
 
         // Contador (a la derecha)
         countLabel = new JLabel("—");
-        countLabel.setForeground(Theme.DIM);
-        countLabel.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        countLabel.setForeground(Theme.TEXT2);
+        countLabel.setFont(Theme.FONT_SMALL);
         add(Box.createHorizontalStrut(20));
         add(countLabel);
     }
 
-    /** Devuelve el estado actual de los filtros. */
+    /** 
+     * @brief Devuelve el estado actual de los filtros. 
+     */
     public FilterOptions get() {
         return new FilterOptions(
             searchField.getText().toLowerCase().trim(),
@@ -91,23 +94,31 @@ public class FilterBar extends JPanel {
         );
     }
 
+    /**
+     * @brief Establece la etiqueta que indica cuántos archivos se muestran con los filtros actuales respecto de cuántos hay
+     */
     public void setCount(int shown, int total) {
         countLabel.setText(shown + " / " + total + " archivos");
     }
 
+    /**
+     * @brief Crea una una etiqueta de texto secundario
+     */
     private static JLabel dimLabel(String text) {
         JLabel l = new JLabel(text);
-        l.setForeground(Theme.DIM);
-        l.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        l.setForeground(Theme.TEXT2);
+        l.setFont(Theme.FONT_SMALL);
         return l;
     }
 
+    /**
+     * @brief Crea un menú desplegable
+     */
     private static JComboBox<String> darkCombo(String... items) {
         JComboBox<String> cb = new JComboBox<>(items);
         cb.setBackground(Theme.INPUT);
         cb.setForeground(Theme.TEXT);
-        cb.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        cb.setBorder(BorderFactory.createLineBorder(Theme.BORDER));
+        cb.setFont(Theme.FONT_SMALL);
         return cb;
     }
 }

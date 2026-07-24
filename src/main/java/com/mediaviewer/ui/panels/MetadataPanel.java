@@ -77,8 +77,8 @@ public class MetadataPanel extends JPanel {
         });
         JScrollPane sp = new JScrollPane(tree);
         sp.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
-        sp.setBackground(Theme.CARD);
-        sp.getViewport().setBackground(Theme.CARD);
+        sp.setBackground(Theme.PANEL);
+        sp.getViewport().setBackground(Theme.PANEL);
         sp.setPreferredSize(new Dimension(0, 260));
         center.add(sp);
         center.add(vgap(4));
@@ -92,7 +92,7 @@ public class MetadataPanel extends JPanel {
 
         // Campos editables
         JLabel editTitle = new JLabel("  Editar etiquetas");
-        editTitle.setForeground(Theme.DIM);
+        editTitle.setForeground(Theme.TEXT2);
         editTitle.setFont(new Font("Segoe UI", Font.ITALIC, 9));
         editTitle.setAlignmentX(0);
         center.add(editTitle);
@@ -255,7 +255,7 @@ public class MetadataPanel extends JPanel {
     // ── Estilo ────────────────────────────────────────────────────────────────
 
     private void styleTree() {
-        tree.setBackground(Theme.CARD);
+        tree.setBackground(Theme.PANEL);
         tree.setForeground(Theme.TEXT);
         tree.setFont(new Font("Segoe UI", Font.PLAIN, 9));
         tree.setRowHeight(20);
@@ -263,7 +263,7 @@ public class MetadataPanel extends JPanel {
         tree.setRootVisible(false);
         tree.setShowsRootHandles(true);
         DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
-        renderer.setBackgroundNonSelectionColor(Theme.CARD);
+        renderer.setBackgroundNonSelectionColor(Theme.PANEL);
         renderer.setBackgroundSelectionColor(Theme.HL2);
         renderer.setTextNonSelectionColor(Theme.TEXT);
         renderer.setTextSelectionColor(Color.WHITE);
@@ -277,7 +277,7 @@ public class MetadataPanel extends JPanel {
         p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
         p.setAlignmentX(0);
         JLabel lbl = new JLabel(label);
-        lbl.setForeground(Theme.DIM);
+        lbl.setForeground(Theme.TEXT2);
         lbl.setFont(new Font("Segoe UI", Font.PLAIN, 9));
         lbl.setPreferredSize(new Dimension(72, 18));
         p.add(lbl);

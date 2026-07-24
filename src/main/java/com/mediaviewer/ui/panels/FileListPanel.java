@@ -52,13 +52,13 @@ public class FileListPanel extends JPanel {
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createEmptyBorder());
-        sp.getViewport().setBackground(Theme.CARD);
-        sp.setBackground(Theme.CARD);
+        sp.getViewport().setBackground(Theme.PANEL);
+        sp.setBackground(Theme.PANEL);
         add(sp, BorderLayout.CENTER);
     }
 
     private void styleTable() {
-        table.setBackground(Theme.CARD);
+        table.setBackground(Theme.PANEL);
         table.setForeground(Theme.TEXT);
         table.setSelectionBackground(Theme.HL);
         table.setSelectionForeground(Color.WHITE);
@@ -84,7 +84,7 @@ public class FileListPanel extends JPanel {
                     JTable t, Object val, boolean sel, boolean foc, int r, int c) {
                 super.getTableCellRendererComponent(t, val, sel, foc, r, c);
                 if (!sel) {
-                    setBackground(r % 2 == 0 ? Theme.CARD : Theme.ACCENT);
+                    setBackground(r % 2 == 0 ? Theme.PANEL : Theme.ACCENT);
                     setForeground(Theme.TEXT);
                 }
                 setBorder(new javax.swing.border.EmptyBorder(0, 4, 0, 4));
