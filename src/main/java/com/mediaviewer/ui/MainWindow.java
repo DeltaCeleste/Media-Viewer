@@ -188,7 +188,7 @@ public class MainWindow extends JFrame {
             btn.setBorderPainted(false);
             btn.setFocusPainted(false);
             btn.setOpaque(true);
-            btn.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 12));
+            btn.setFont(Theme.FONT_MED_BOLD);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             btn.addActionListener(evt -> handleViewerAction(b[1]));
             zoomButtons.add(btn);
@@ -620,8 +620,15 @@ public class MainWindow extends JFrame {
             UIManager.put("Button.background", Theme.ACCENT);
             UIManager.put("Button.foreground", Theme.TEXT);
             
+            // Claves para paneles auxiliares
             UIManager.put("OptionPane.background",       Theme.PANEL);
             UIManager.put("OptionPane.messageForeground",Theme.TEXT);
+
+            //Claves para Sliders
+            UIManager.put("Slider.trackColor",       Theme.ACCENT);
+            UIManager.put("Slider.trackValueColor",  Theme.HL);
+            UIManager.put("Slider.thumbColor",       Theme.HL);
+            UIManager.put("Slider.hoverThumbColor",  Theme.HL2);
 
         } catch (Exception ignored) {}
     }

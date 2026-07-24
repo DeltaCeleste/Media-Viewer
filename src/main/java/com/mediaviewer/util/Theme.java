@@ -6,6 +6,16 @@ import java.awt.Font;
 /** Paleta y fuentes de MediaVault. */
 public final class Theme {
 
+    // Fuentes
+    public static final String FONT_DEFAULT   = "Segoe UI";
+    public static final String FONT_SYMBOL    = "Segoe UI Symbol";
+    public static final String FONT_EMOJI     = "Segoe UI Emoji";
+    public static final Font  FONT_BIG          = new Font(FONT_SYMBOL, Font.PLAIN,  18);
+    public static final Font  FONT_MED_BOLD     = new Font(FONT_SYMBOL, Font.BOLD,  14);
+    public static final Font  FONT_SMALL_BOLD   = new Font(FONT_SYMBOL, Font.PLAIN, 11);
+    public static final Font  FONT_SMALL        = new Font(FONT_SYMBOL, Font.PLAIN, 11);
+    public static final Font  FONT_MONO         = new Font("Consolas",  Font.PLAIN, 12); 
+
     /**
      * @brief Constructor para la paleta de claros u oscuros
      * @param light true si es modo día y false si es modo noche
@@ -25,17 +35,6 @@ public final class Theme {
     public static final Color SUCCESS = hex("#059669");
     public static final Color FAILURE = hex("#E11D48");
     public static final String VIDEO_PLAYER = "#DFEFFF";
-
-    // Fuentes
-    public static final String FONT_DEFAULT   = "Segoe UI";
-    public static final String FONT_SYMBOL    = "Segoe UI Symbol";
-    public static final String FONT_EMOJI     = "Segoe UI Emoji";
-    public static final Font  FONT_BIG          = new Font(FONT_SYMBOL, Font.PLAIN,  18);
-    public static final Font  FONT_MED_BOLD     = new Font(FONT_SYMBOL, Font.BOLD,  14);
-    public static final Font  FONT_SMALL_BOLD   = new Font(FONT_SYMBOL, Font.PLAIN, 11);
-    public static final Font  FONT_SMALL        = new Font(FONT_SYMBOL, Font.PLAIN, 11);
-
-    public static final Font  FONT_MONO  = new Font("Consolas",  Font.PLAIN, 10);
     
 
     private static Color hex(String h) {

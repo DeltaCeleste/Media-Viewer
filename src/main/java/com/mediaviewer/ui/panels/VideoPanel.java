@@ -197,7 +197,6 @@ public class VideoPanel extends JPanel {
         // --- Barra de progreso ---
         progressSlider = new JSlider(0, 100, 0);
         progressSlider.setPreferredSize(new Dimension(250, 20));
-        progressSlider.setBackground(Theme.BG);
         progressSlider.addChangeListener(e -> {
             if (progressSlider.getValueIsAdjusting()) {
                 isDragging = true;
@@ -211,7 +210,7 @@ public class VideoPanel extends JPanel {
         // --- Etiqueta de tiempo ---
         timeLabel = new JLabel("00:00:00 / 00:00:00");
         timeLabel.setForeground(Theme.TEXT);
-        timeLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        timeLabel.setFont(Theme.FONT_MONO);
         panel.add(timeLabel);
         
         // --- Control de volumen ---
@@ -221,7 +220,6 @@ public class VideoPanel extends JPanel {
         
         volumeSlider = new JSlider(0, 100, 100);
         volumeSlider.setPreferredSize(new Dimension(80, 20));
-        volumeSlider.setBackground(Theme.BG);
         volumeSlider.addChangeListener(e -> {
             if (!volumeSlider.getValueIsAdjusting()) {
                 setVolume(volumeSlider.getValue() / 100.0);

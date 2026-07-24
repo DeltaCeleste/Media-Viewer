@@ -233,7 +233,7 @@ public class ViewerPanel extends JPanel {
 
         c.gridy = 0;
         JLabel ico = new JLabel("🎬", SwingConstants.CENTER);
-        ico.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 72));
+        ico.setFont(new Font(Theme.FONT_EMOJI, Font.PLAIN, 72));
         ico.setForeground(Theme.TEXT2);
         ph.add(ico, c);
 
@@ -476,7 +476,7 @@ public class ViewerPanel extends JPanel {
     private static JButton styledButton(String text) {
         JButton b = new JButton(text);
         b.setBackground(Theme.HL);
-        b.setForeground(Color.WHITE);
+        b.setForeground(Theme.TEXT3);
         b.setFont(new Font(Theme.FONT_SYMBOL, Font.BOLD, 11));
         b.setBorderPainted(false);
         b.setFocusPainted(false);

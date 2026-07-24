@@ -80,7 +80,7 @@
         <dependency>
             <groupId>com.formdev</groupId>
             <artifactId>flatlaf-extras</artifactId>
-            <version>3.5.4</version> <!-- O la misma versión que estés usando de flatlaf -->
+            <version>3.5.4</version> 
         </dependency>
     </dependencies>
 
