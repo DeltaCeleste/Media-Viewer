@@ -1,13 +1,20 @@
 package com.mediaviewer.ui.panels;
 
-import com.mediaviewer.model.FilterOptions;
-import com.mediaviewer.util.Theme;
+import java.awt.FlowLayout;
+import java.awt.Font;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
-import java.util.function.Supplier;
+
+import com.mediaviewer.model.FilterOptions;
+import com.mediaviewer.util.Theme;
 
 /**
  * Barra de filtros: búsqueda de texto, tipo, ordenación, subcarpetas.
@@ -15,15 +22,17 @@ import java.util.function.Supplier;
  */
 public class FilterBar extends JPanel {
 
-    private final JTextField   searchField;
+    private final JTextField        searchField;
     private final JComboBox<String> typeCombo;
     private final JComboBox<String> sortCombo;
-    private final JCheckBox    recursiveBox;
-    private final JLabel       countLabel;
-    private final Runnable     onChanged;
+    private final JCheckBox         recursiveBox;
+    private final JLabel            countLabel;
+    private final Runnable          onChangedOrder;
+    private final Runnable          onChangedRecursive;
 
-    public FilterBar(Runnable onChanged) {
-        this.onChanged = onChanged;
+    public FilterBar(Runnable onChangedOrder, Runnable onChangedRecursive) {
+        this.onChangedOrder = onChangedOrder;
+        this.onChangedRecursive = onChangedRecursive;
         setBackground(Theme.PANEL);
         setLayout(new FlowLayout(FlowLayout.LEFT, 8, 6));
         setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER));
@@ -45,16 +54,16 @@ public class FilterBar extends JPanel {
             BorderFactory.createEmptyBorder(3, 6, 3, 6)));
         searchField.setToolTipText("Filtrar por nombre (texto parcial)");
         searchField.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e)  { onChanged.run(); }
-            public void removeUpdate(DocumentEvent e)  { onChanged.run(); }
-            public void changedUpdate(DocumentEvent e) { onChanged.run(); }
+            public void insertUpdate(DocumentEvent e)  { onChangedOrder.run(); }
+            public void removeUpdate(DocumentEvent e)  { onChangedOrder.run(); }
+            public void changedUpdate(DocumentEvent e) { onChangedOrder.run(); }
         });
         add(searchField);
 
         // Tipo
         add(dimLabel("Tipo:"));
         typeCombo = darkCombo("Todo", "Imágenes", "GIFs", "Videos");
-        typeCombo.addActionListener(e -> onChanged.run());
+        typeCombo.addActionListener(e -> onChangedOrder.run());
         add(typeCombo);
 
         // Ordenación
@@ -63,7 +72,7 @@ public class FilterBar extends JPanel {
             "Nombre ↑", "Nombre ↓",
             "Fecha ↑",  "Fecha ↓",
             "Tamaño ↑", "Tamaño ↓");
-        sortCombo.addActionListener(e -> onChanged.run());
+        sortCombo.addActionListener(e -> onChangedOrder.run());
         add(sortCombo);
 
         // Subcarpetas
@@ -71,7 +80,7 @@ public class FilterBar extends JPanel {
         recursiveBox.setBackground(Theme.PANEL);
         recursiveBox.setForeground(Theme.TEXT);
         recursiveBox.setFont(Theme.FONT_SMALL);
-        recursiveBox.addActionListener(e -> onChanged.run());
+        recursiveBox.addActionListener(e -> onChangedRecursive.run());
         add(recursiveBox);
 
         // Contador (a la derecha)

@@ -1,22 +1,51 @@
 package com.mediaviewer.ui;
 
+import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.Desktop;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
+
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.UIManager;
+
+import com.formdev.flatlaf.extras.FlatInspector;
 import com.mediaviewer.engine.FileScanner;
 import com.mediaviewer.model.FilterOptions;
 import com.mediaviewer.model.MediaFile;
-import com.mediaviewer.ui.panels.*;
+import com.mediaviewer.ui.panels.FileListPanel;
+import com.mediaviewer.ui.panels.FilterBar;
+import com.mediaviewer.ui.panels.MetadataPanel;
+import com.mediaviewer.ui.panels.ThumbnailStrip;
+import com.mediaviewer.ui.panels.ViewerPanel;
 import com.mediaviewer.util.Theme;
-
-import com.formdev.flatlaf.extras.FlatInspector;
-import javax.swing.*;
-import javax.swing.Timer;
-import java.awt.*;
-import java.awt.event.*;
-import java.io.File;
-import java.util.*;
-import java.util.List;
-import java.util.prefs.Preferences;
-import java.util.stream.Collectors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Ventana principal de mediaviewer.
@@ -121,7 +150,7 @@ public class MainWindow extends JFrame {
         add(topBar, BorderLayout.NORTH);
 
         // ── Barra de filtros ──
-        filterBar = new FilterBar(this::applyFilters);
+        filterBar = new FilterBar(this::applyFilters, this::startScan);
         add(filterBar, BorderLayout.AFTER_LAST_LINE); // provisional, se reordena
 
         // ── Panel principal (split) ──
