@@ -15,6 +15,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.prefs.Preferences;
@@ -40,9 +41,7 @@ import com.formdev.flatlaf.extras.FlatInspector;
 import com.mediaviewer.engine.FileScanner;
 import com.mediaviewer.model.FilterOptions;
 import com.mediaviewer.model.MediaFile;
-import com.mediaviewer.ui.panels.FileListPanel;
 import com.mediaviewer.ui.panels.FilterBar;
-import com.mediaviewer.ui.panels.MetadataPanel;
 import com.mediaviewer.ui.panels.ThumbnailStrip;
 import com.mediaviewer.ui.panels.ViewerPanel;
 import com.mediaviewer.util.Theme;
@@ -70,11 +69,12 @@ public class MainWindow extends JFrame {
     private final static int    SHOW_SCAN_TIME = 5000;
 
     // ── Estado ────────────────────────────────────────────────────────────────
-    private List<MediaFile> allFiles      = new ArrayList<>();
-    private List<MediaFile> filtered      = new ArrayList<>();
-    private int             currentIdx    = -1;
-    private File            currentDir    = null;
-    private FileScanner     activeScanner = null;
+    private List<MediaFile>    allFiles      = new ArrayList<>();
+    private List<MediaFile>    filtered      = new ArrayList<>();
+    private HashSet<MediaFile> selected      = new HashSet<>();
+    private int                currentIdx    = -1;
+    private File               currentDir    = null;
+    private FileScanner        activeScanner = null;
 
     // ── Persistencia ─────────────────────────────────────────────────────────
     private final Preferences prefs = Preferences.userNodeForPackage(MainWindow.class);
@@ -82,8 +82,8 @@ public class MainWindow extends JFrame {
     // ── Paneles ───────────────────────────────────────────────────────────────
     private ViewerPanel    viewer;
     private ThumbnailStrip thumbStrip;
-    private FileListPanel  fileList;
-    private MetadataPanel  metaPanel;
+    //private FileListPanel  fileList;
+    //private MetadataPanel  metaPanel;
     private FilterBar      filterBar;
     private JLabel         dirLabel;
     private JLabel         scanLabel;
@@ -115,6 +115,31 @@ public class MainWindow extends JFrame {
             File f = new File(lastDir);
             if (f.isDirectory()) SwingUtilities.invokeLater(() -> loadDirectory(f));
         }
+    }
+
+    // ── utilidades ────────────────────────────────────────────────────────────
+    /**
+     * @brief Devuelve el archivo actualmente seleccionado por currentIdx
+     * @return el archivo (MediaFile)
+     */
+    private MediaFile getCurrentMediaFile(){
+        return getMediaFileByIdx(currentIdx);
+    }
+
+    /**
+     * @brief Devuelve el file (ruta) al archivo actualmente seleccionado
+     */
+    private File getCurrentFile(){
+        return getCurrentMediaFile().getFile();
+    }
+
+    /**
+     * @brief Devuelve el archivo referenciado en los filtrados por el índice provisto
+     * @param idx el índice
+     * @return el archivo referenciado
+     */
+    private MediaFile getMediaFileByIdx(int idx){
+        return filtered.get(idx);
     }
 
     // ── UI ────────────────────────────────────────────────────────────────────
@@ -289,30 +314,133 @@ public class MainWindow extends JFrame {
      * @brief Establece la lógica de la aplicación a algunas teclas y eventos de teclado para navegación por teclado
      */
     private void bindKeys() {
-        KeyStroke left   = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT,   0);
-        KeyStroke right  = KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT,  0);
-        KeyStroke home   = KeyStroke.getKeyStroke(KeyEvent.VK_HOME,   0);
-        KeyStroke end    = KeyStroke.getKeyStroke(KeyEvent.VK_END,    0);
-        KeyStroke del    = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
-        KeyStroke f5     = KeyStroke.getKeyStroke(KeyEvent.VK_F5,     0);
-        KeyStroke ctrlO  = KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK);
-
         JRootPane rp = getRootPane();
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(left,  "prev");
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(right, "next");
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(home,  "first");
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(end,   "last");
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(del,   "delete");
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(f5,    "refresh");
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlO, "open");
 
-        rp.getActionMap().put("prev",    new AbstractAction() { public void actionPerformed(ActionEvent e) { goTo(currentIdx - 1); } });
-        rp.getActionMap().put("next",    new AbstractAction() { public void actionPerformed(ActionEvent e) { goTo(currentIdx + 1); } });
-        rp.getActionMap().put("first",   new AbstractAction() { public void actionPerformed(ActionEvent e) { goTo(0); } });
-        rp.getActionMap().put("last",    new AbstractAction() { public void actionPerformed(ActionEvent e) { goTo(filtered.size() - 1); } });
-        rp.getActionMap().put("delete",  new AbstractAction() { public void actionPerformed(ActionEvent e) { deleteCurrentFile(); } });
-        rp.getActionMap().put("refresh", new AbstractAction() { public void actionPerformed(ActionEvent e) { startScan(); } });
-        rp.getActionMap().put("open",    new AbstractAction() { public void actionPerformed(ActionEvent e) { chooseDirectory(); } });
+        // Movimiento =====================================================================================================
+        KeyStroke left      = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT,   0);                          // Una a la izquierda
+        KeyStroke right     = KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT,  0);                          // Una a la derecha
+        KeyStroke ctrlleft  = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT,   InputEvent.CTRL_DOWN_MASK);  // A la 0
+        KeyStroke ctrlright = KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT,  InputEvent.CTRL_DOWN_MASK);  // A la última
+
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(left,      "prev");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(right,     "next");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlleft,  "first");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlright, "last");
+
+        rp.getActionMap().put("prev",       new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(currentIdx - 1); } });
+        rp.getActionMap().put("next",       new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(currentIdx + 1); } });
+        rp.getActionMap().put("first",      new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(0); } });
+        rp.getActionMap().put("last",       new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(filtered.size() - 1); } });
+
+        // Selección =======================================================================================================
+        KeyStroke up        = KeyStroke.getKeyStroke(KeyEvent.VK_UP,     0);                          // Añadir o eliminar el archivo actual a la selección
+        KeyStroke ctrlA     = KeyStroke.getKeyStroke(KeyEvent.VK_A,      InputEvent.CTRL_DOWN_MASK);  // Seleccionar todo
+
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(up,        "select");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlA,     "allselect");
+
+        rp.getActionMap().put("select",     new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { toogleSelect(getCurrentMediaFile()); } });
+        rp.getActionMap().put("allselect",  new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { selectAll(); } });
+
+        // Borrado =========================================================================================================
+        KeyStroke del       = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);                          // Borrar el archivo actual
+
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(del,       "delete");
+
+        rp.getActionMap().put("delete",     new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { deleteCurrentSelection(); } });
+
+        // Otras funciones =================================================================================================
+        KeyStroke f12       = KeyStroke.getKeyStroke(KeyEvent.VK_F12,    InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);  // DEBUG: funciones beta para pruebas seguras
+        KeyStroke f5        = KeyStroke.getKeyStroke(KeyEvent.VK_F5,     0);                          // Refrescar
+        KeyStroke ctrlO     = KeyStroke.getKeyStroke(KeyEvent.VK_O,      InputEvent.CTRL_DOWN_MASK);  // Abrir carpeta
+        KeyStroke enter     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,  0);                          // Abrir el archivo actual externamente
+       
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(f12,       "test");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(f5,        "refresh");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlO,     "open");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(enter,     "external");
+        
+        rp.getActionMap().put("test",       new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { deleteButcurrentSelection(); } });
+        rp.getActionMap().put("refresh",    new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { startScan(); } });
+        rp.getActionMap().put("open",       new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { chooseDirectory(); } });
+        rp.getActionMap().put("external",   new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { openExternally(getCurrentFile()); } });
+       
+
+    }
+
+    // ── Selección ────────────────────────────────────────────────────────────
+    /**
+     * @brief Introduce el índice de un archivo al conjunto seleccionados o lo saca si ya estaba seleccionado
+     * @param mf el archivo
+     */
+    private void toogleSelect(MediaFile mf){
+        if(selected.contains(mf)){
+            removeSelected(mf);
+        }
+        else{
+            addSelected(mf);
+        }
+    }
+
+    /**
+     * @brief Introduce el índice de un archivo al grupo de seleccionados
+     * @param mf el archivo a introducir
+     */
+    private void addSelected(MediaFile mf){
+        if(!selected.contains(mf)){
+            selected.add(mf);
+            System.out.println(mf.getName() + " seleccionado");
+        }
+    }
+
+    /**
+     * @brief Retira el índice de un archivo al grupo de seleccionados
+     * @param mf el archivo a eliminar
+     */
+    private void removeSelected(MediaFile mf){
+        if(selected.contains(mf)){
+            selected.remove(mf);
+            System.out.println(mf.getName() + " deseleccionado");
+        }
+    }
+
+    /**
+     * @brief vacía el conjunto de seleccionados
+     */
+    private void clearSelected(){
+        selected.clear();
+    }
+
+    /**
+     * @brief encuentra el índice del archivo más cercano (hacia atrás en filtered) que no este seleccionado y ajusta este indice simulando un delete
+     * @return dicho indice
+     */
+    private int findClosestIdx(){
+        if(selected.size() == filtered.size()) return -1; // Estamos ante una selección total
+        int idx = currentIdx;
+        int candidato = -1;
+        int anteriores = 0;
+        while(idx >= 0){
+            if(!selected.contains(getMediaFileByIdx(idx)) && candidato == -1){
+                candidato = idx;
+            } else {
+                if(candidato != -1 && selected.contains(getMediaFileByIdx(idx))){
+                    anteriores++;
+                }
+            }
+            idx--;
+
+        }
+        System.err.println(candidato - anteriores);
+        if(candidato == -1) return 0;
+        else return candidato - anteriores;
+    }
+
+    /**
+     * @brief selecciona todas las imagenes del filtered actual
+     */
+    private void selectAll(){
+        selected.addAll(filtered);
     }
 
     // ── Directorio ────────────────────────────────────────────────────────────
@@ -382,6 +510,7 @@ public class MainWindow extends JFrame {
      * @param idx el indice de dicho archivo
      */
     private void applyFilters(int idx) {
+        clearSelected(); // limpiamos los seleccionados pues filtered puede cambiar.
         FilterOptions opts = filterBar.get();
         List<MediaFile> items = new ArrayList<>(allFiles);
 
@@ -441,7 +570,7 @@ public class MainWindow extends JFrame {
         applyFilters(0);
     }
 
-    // ── Selección / Navegación ────────────────────────────────────────────────
+    // ── Selección (aplicación) / Navegación ────────────────────────────────────────────────
     /**
      * @brief selecciona un archivo por su indice en el vector de filtrados y actualiza la vista con este elemento
      */
@@ -451,7 +580,7 @@ public class MainWindow extends JFrame {
         idx = Math.max(0, Math.min(idx, filtered.size() - 1));
         int prevIdx = currentIdx; // Si venimos de currentIdx = -1, el viewer panel debería estar vacío 
         currentIdx = idx;
-        MediaFile mf = filtered.get(idx);
+        MediaFile mf = getCurrentMediaFile();
 
         if (mf == viewer.getCurrent() && prevIdx != -1) return;
 
@@ -487,36 +616,84 @@ public class MainWindow extends JFrame {
             case "zoom−" -> viewer.zoomOut();
             case "zoom+" -> viewer.zoomIn();
             case "reset" -> viewer.resetView();
-            case "open"  -> { if (currentIdx >= 0) openExternally(filtered.get(currentIdx).getFile()); }
+            case "open"  -> { if (currentIdx >= 0) openExternally(getCurrentFile()); }
         }
     }
 
-    private void onSaved(MediaFile mf) {
+    /*private void onSaved(MediaFile mf) {
         // Recargar lista en caso de renombre
         fileList.populate(filtered);
         fileList.highlight(currentIdx);
         if (currentIdx >= 0 && currentIdx < filtered.size())
             posLabel.setText((currentIdx+1) + " / " + filtered.size() + "   " + mf.getName());
+    }*/
+
+    /**
+     * @brief borra todo filtered menos la seleccion actual
+     */
+    private void deleteButcurrentSelection(){
+        HashSet<MediaFile> save = new HashSet<>(selected);
+        clearSelected();
+        selected.addAll(filtered);
+        selected.removeAll(save);
+        if(!deleteCurrentSelection()){
+            clearSelected();
+            selected.addAll(save);
+        }
+    }
+
+    /**
+     * @brief borra la selección actual, o si no hay seleccionadas, la imagen actual
+     */
+    private boolean deleteCurrentSelection(){
+        if(selected.isEmpty()){
+            return deleteCurrentFile();
+        }
+        else{
+            int choice = JOptionPane.showConfirmDialog(this,
+            "¿Eliminar permanentemente los " + selected.size() + " elementos seleccionados?\n",
+            "Eliminar seleccion de archivos", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (choice != JOptionPane.YES_OPTION) return false;;
+            int errores = 0;
+            int newidx = findClosestIdx();
+            
+            for (MediaFile mf : selected){
+                if(mf.getFile().delete()){
+                    allFiles.remove(mf);
+                }
+                else {
+                    errores++;
+                }
+            }
+            if(errores != 0){
+                JOptionPane.showMessageDialog(this, "Hubo un problema eliminando " + errores + " archivos",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            }
+            applyFilters(newidx);
+            return true;
+        }
     }
 
     /**
      * @brief Pide confirmación para eliminar la imagen seleccionada actualmente (por índice) y de ser afirmativa
      *        la respuesta la elimina y actualiza la interfaz
      */
-    private void deleteCurrentFile() {
-        if (currentIdx < 0 || filtered.isEmpty()) return;
-        MediaFile mf = filtered.get(currentIdx);
+    private boolean deleteCurrentFile() {
+        if (currentIdx < 0 || filtered.isEmpty()) return false;
+        MediaFile mf = getCurrentMediaFile();
         int choice = JOptionPane.showConfirmDialog(this,
             "¿Eliminar permanentemente?\n\n" + mf.getName(),
             "Eliminar archivo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (choice != JOptionPane.YES_OPTION) return;
+        if (choice != JOptionPane.YES_OPTION) return false;
         if (mf.getFile().delete()) {
             allFiles.remove(mf);
             applyFilters(currentIdx-1);
         } else {
             JOptionPane.showMessageDialog(this, "No se pudo eliminar el archivo.",
                 "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
         }
+        return true;
     }
 
     /**
