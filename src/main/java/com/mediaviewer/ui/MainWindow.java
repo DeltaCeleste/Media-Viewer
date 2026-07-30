@@ -4,6 +4,7 @@ import com.mediaviewer.engine.FileScanner;
 import com.mediaviewer.model.FilterOptions;
 import com.mediaviewer.model.MediaFile;
 import com.mediaviewer.ui.panels.*;
+import com.mediaviewer.ui.components.*;
 import com.mediaviewer.util.Theme;
 
 import com.formdev.flatlaf.extras.FlatInspector;
@@ -49,20 +50,23 @@ public class MainWindow extends JFrame {
 
     // ── Persistencia ─────────────────────────────────────────────────────────
     private final Preferences prefs = Preferences.userNodeForPackage(MainWindow.class);
+    private final static String THEME_PREF_KEY = "theme";
+    private final static String DIR_PREF_KEY   = "lastDir";
 
     // ── Paneles ───────────────────────────────────────────────────────────────
     private ViewerPanel    viewer;
     private ThumbnailStrip thumbStrip;
     private FileListPanel  fileList;
-    private MetadataPanel  metaPanel;
-    private FilterBar      filterBar;
-    private JLabel         dirLabel;
-    private JLabel         scanLabel;
+    //private MetadataPanel  metaPanel;
+    //private FilterBar      filterBar;
+    private ThemedLabel    dirLabel;
+    private ThemedLabel    scanLabel;
     private JLabel         posLabel;
-    private JLabel         viewerStatus;
+    private ThemedLabel    viewerStatus;
 
     // ── Control ─────────────────────────────────────────────────────────────
     private final AtomicInteger scanLabelInteger = new AtomicInteger(0);
+
 
     public MainWindow() {
         super("Meδia Viewer");
@@ -70,50 +74,55 @@ public class MainWindow extends JFrame {
         setSize(1420, 900);
         setMinimumSize(new Dimension(960, 660));
         setLocationRelativeTo(null);
-        setBackground(Theme.BG);
+
+        ThemeManager themeManager = ThemeManager.getInstance();
+        String themeName = prefs.get(THEME_PREF_KEY, Theme.LIGHT.name());
+        try {
+            ThemeManager.setTheme(Theme.valueOf(themeName));
+        } catch (IllegalArgumentException e) {
+            ThemeManager.setTheme(Theme.LIGHT);
+        }
+        System.out.println(ThemeManager.getInstance().getCurrentTheme().getThemeName());
 
         FlatInspector.install("ctrl shift alt F");
-        applyLookAndFeel();
+        applyLookAndFeel(ThemeManager.getInstance().getCurrentTheme());
         buildUI();
+
         bindKeys();
         addWindowListener(new WindowAdapter() {
             @Override public void windowClosing(WindowEvent e) { shutdown(); }
         });
 
         // Restaurar última carpeta
-        String lastDir = prefs.get("lastDir", "");
+        String lastDir = prefs.get(DIR_PREF_KEY, "");
         if (!lastDir.isEmpty()) {
             File f = new File(lastDir);
             if (f.isDirectory()) SwingUtilities.invokeLater(() -> loadDirectory(f));
         }
+
+        // Registrar frame como listener
+        ThemeManager.getInstance().addListener(this::applyThemeToFrame);
     }
 
     // ── UI ────────────────────────────────────────────────────────────────────
     /**
      * @brief Construye la Interfaz gráfica a partir de los paneles
      */
-    private void buildUI() {
+    private void buildUI() {  
         // ── Barra superior ──
-        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 7));
-        topBar.setBackground(Theme.PANEL);
+        ThemedPanel topBar = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 10, 7));
 
-        JLabel logo = new JLabel("Meδia Viewer");
-        logo.setForeground(Theme.TEXT);
-        logo.setFont(Theme.FONT_MED_BOLD);
+        ThemedLabel logo = new ThemedLabel("Meδia Viewer", TextType.PRIMARY, FontSize.MED, Font.BOLD);
         topBar.add(logo);
 
         JButton openBtn = highlightButton("Abrir carpeta");
         openBtn.addActionListener(evt -> chooseDirectory());
         topBar.add(openBtn);
 
-        dirLabel = new JLabel("Sin carpeta — Ctrl+O para abrir");
-        dirLabel.setForeground(Theme.TEXT2);
-        dirLabel.setFont(Theme.FONT_SMALL);
+        dirLabel = new ThemedLabel("Sin carpeta — Ctrl+O para abrir", TextType.SECONDARY, FontSize.SMALL, Font.PLAIN);
         topBar.add(dirLabel);
 
-        scanLabel = new JLabel("");
-        scanLabel.setForeground(Theme.SUCCESS);
-        scanLabel.setFont(Theme.FONT_SMALL);
+        scanLabel = new ThemedLabel("", TextType.SUCCESS, FontSize.SMALL, Font.PLAIN);
         // empujar a la derecha
         topBar.add(Box.createHorizontalStrut(30));
         topBar.add(scanLabel);
@@ -126,9 +135,7 @@ public class MainWindow extends JFrame {
 
         // ── Panel principal (split) ──
         viewer = new ViewerPanel();
-        viewerStatus = new JLabel("Selecciona una carpeta para empezar");
-        viewerStatus.setForeground(Theme.TEXT2);
-        viewerStatus.setFont(Theme.FONT_SMALL);
+        viewerStatus = new ThemedLabel("Selecciona una carpeta para empezar", TextType.SECONDARY, FontSize.SMALL, Font.PLAIN);
         viewer.setStatusLabel(viewerStatus);
 
         /*fileList  = new FileListPanel(this::selectByIndex);
@@ -305,7 +312,7 @@ public class MainWindow extends JFrame {
      */
     private void loadDirectory(File dir) {
         currentDir = dir;
-        prefs.put("lastDir", dir.getAbsolutePath());
+        prefs.put(DIR_PREF_KEY, dir.getAbsolutePath());
         String shortPath = dir.getAbsolutePath();
         if (shortPath.length() > 65) shortPath = "…" + shortPath.substring(shortPath.length() - 62);
         dirLabel.setText(shortPath); //Etiqueta de la topBar
@@ -562,8 +569,9 @@ public class MainWindow extends JFrame {
     // ── Look & Feel ───────────────────────────────────────────────────────────
     /**
      * @brief Aplica los estilos propios de Theme al UIManager
+     * @param theme el tema del que coger los colores
      */
-    private static void applyLookAndFeel() {
+    private static void applyLookAndFeel(Theme theme) {
         try {
             // Intentar cargar FlatLaf (Dark o Light) por reflexión o directamente
             boolean loaded = false;
@@ -593,43 +601,56 @@ public class MainWindow extends JFrame {
             }
 
             // Colores globales (SE APLICAN DESPUÉS DE ESTABLECER EL LOOK AND FEEL)
-            UIManager.put("Panel.background",            Theme.PANEL);
-            UIManager.put("ScrollBar.background",        Theme.ACCENT);
-            UIManager.put("ScrollBar.thumb",             Theme.HL);
+            UIManager.put("Panel.background",            theme.getBackground());
+            UIManager.put("ScrollBar.background",        theme.getAccent());
+            UIManager.put("ScrollBar.thumb",             theme.getHighLight());
             
             // Claves globales para ComboBox
-            UIManager.put("ComboBox.background",          Theme.INPUT);
-            UIManager.put("ComboBox.foreground",          Theme.TEXT);
-            UIManager.put("ComboBox.popupBackground",     Theme.PANEL);
-            UIManager.put("ComboBox.focusedBackground",   Theme.HL2);
-            UIManager.put("ComboBox.selectionBackground", Theme.HL2);
-            UIManager.put("ComboBox.selectionForeground", Theme.TEXT);
+            UIManager.put("ComboBox.background",          theme.getInput());
+            UIManager.put("ComboBox.foreground",          theme.getText1());
+            UIManager.put("ComboBox.popupBackground",     theme.getBackground());
+            UIManager.put("ComboBox.focusedBackground",   theme.getHighLight2());
+            UIManager.put("ComboBox.selectionBackground", theme.getHighLight2());
+            UIManager.put("ComboBox.selectionForeground", theme.getText1());
             // Color de selección en la lista desplegable (por si usa el componente List)
-            UIManager.put("List.selectionBackground",     Theme.HL2);
-            UIManager.put("List.selectionForeground",     Theme.TEXT);
-            UIManager.put("Component.focusColor",         Theme.ACCENT);
+            UIManager.put("List.selectionBackground",     theme.getHighLight2());
+            UIManager.put("List.selectionForeground",     theme.getText1());
+            UIManager.put("Component.focusColor",         theme.getAccent());
 
             // Claves para las checkboxes
-            UIManager.put("CheckBox.icon.borderColor",        Theme.BORDER);
-            UIManager.put("CheckBox.icon.background",         Theme.INPUT);
-            UIManager.put("CheckBox.icon.selectedBackground", Theme.INPUT);
-            UIManager.put("CheckBox.icon.checkmarkColor",     Theme.HL2);
+            UIManager.put("CheckBox.icon.borderColor",        theme.getBorder());
+            UIManager.put("CheckBox.icon.background",         theme.getInput());
+            UIManager.put("CheckBox.icon.selectedBackground", theme.getInput());
+            UIManager.put("CheckBox.icon.checkmarkColor",     theme.getHighLight2());
 
             // Claves globales para Botones
             UIManager.put("Button.arc", 0);
-            UIManager.put("Button.background", Theme.ACCENT);
-            UIManager.put("Button.foreground", Theme.TEXT);
+            UIManager.put("Button.background", theme.getAccent());
+            UIManager.put("Button.foreground", theme.getText1());
             
             // Claves para paneles auxiliares
-            UIManager.put("OptionPane.background",       Theme.PANEL);
-            UIManager.put("OptionPane.messageForeground",Theme.TEXT);
+            UIManager.put("OptionPane.background",       theme.getBackground());
+            UIManager.put("OptionPane.messageForeground",theme.getText1());
 
             //Claves para Sliders
-            UIManager.put("Slider.trackColor",       Theme.ACCENT);
-            UIManager.put("Slider.trackValueColor",  Theme.HL);
-            UIManager.put("Slider.thumbColor",       Theme.HL);
-            UIManager.put("Slider.hoverThumbColor",  Theme.HL2);
+            UIManager.put("Slider.trackColor",       theme.getAccent());
+            UIManager.put("Slider.trackValueColor",  theme.getHighLight());
+            UIManager.put("Slider.thumbColor",       theme.getHighLight());
+            UIManager.put("Slider.hoverThumbColor",  theme.getHighLight2());
 
         } catch (Exception ignored) {}
+    }
+
+    private void applyThemeToFrame(Theme theme) {
+        applyLookAndFeel(theme);
+        setBackground(theme.getBackground());
+    }
+
+    private void applyThemeToFrame() {
+        applyThemeToFrame(ThemeManager.getInstance().getCurrentTheme());
+    }
+
+    private void changeTheme(){
+        prefs.put(THEME_PREF_KEY, ThemeManager.getInstance().getCurrentTheme().getName());
     }
 }
