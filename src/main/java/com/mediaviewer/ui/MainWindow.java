@@ -89,6 +89,7 @@ public class MainWindow extends JFrame {
     private JLabel scanLabel;
     private JLabel posLabel;
     private JLabel viewerStatus;
+    private JLabel selectStatus;
 
     // ── Control ─────────────────────────────────────────────────────────────
     private final AtomicInteger scanLabelInteger = new AtomicInteger(0);
@@ -256,9 +257,14 @@ public class MainWindow extends JFrame {
             zoomButtons.add(btn);
         }
 
+        selectStatus = new JLabel(selected.size() + " archivos seleccionados");
+        selectStatus.setForeground(Theme.TEXT2);
+        selectStatus.setFont(Theme.FONT_SMALL);
+
         viewerBar.add(viewerStatus);
         viewerBar.add(zoomButtons);
-        viewerBar.add(Box.createHorizontalStrut(viewerStatus.getWidth()));
+        //viewerBar.add(Box.createHorizontalStrut(viewerStatus.getWidth()));
+        viewerBar.add(selectStatus);
         viewerBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER));
 
         center.add(viewer, BorderLayout.CENTER);
@@ -452,6 +458,7 @@ public class MainWindow extends JFrame {
         } else {
             addSelected(mf);
         }
+        selectStatus.setText(selected.size() + " archivos seleccionados");
     }
 
     /**
@@ -461,7 +468,17 @@ public class MainWindow extends JFrame {
     private void addSelected(MediaFile mf) {
         if (!selected.contains(mf)) {
             selected.add(mf);
-            System.out.println(mf.getName() + " seleccionado");
+
+            int scanGen = scanLabelInteger.incrementAndGet();
+            scanLabel.setText(mf.getName() + " seleccionado");
+            Timer t = new Timer(SHOW_SCAN_TIME, e -> {
+                if (scanLabelInteger.get() == scanGen) {
+                    scanLabel.setText("");
+                }
+            });
+            t.setRepeats(false);
+            t.start();
+            //System.out.println(mf.getName() + " seleccionado");
         }
     }
 
@@ -472,7 +489,17 @@ public class MainWindow extends JFrame {
     private void removeSelected(MediaFile mf) {
         if (selected.contains(mf)) {
             selected.remove(mf);
-            System.out.println(mf.getName() + " deseleccionado");
+
+            int scanGen = scanLabelInteger.incrementAndGet();
+            scanLabel.setText(mf.getName() + " deseleccionado");
+            Timer t = new Timer(SHOW_SCAN_TIME, e -> {
+                if (scanLabelInteger.get() == scanGen) {
+                    scanLabel.setText("");
+                }
+            });
+            t.setRepeats(false);
+            t.start();
+            //System.out.println(mf.getName() + " deseleccionado");
         }
     }
 
