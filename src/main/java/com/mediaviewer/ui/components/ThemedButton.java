@@ -6,37 +6,37 @@ import java.awt.*;
 
 public class ThemedButton extends ThemedComponent {
     private JButton button;
-    private String text;
+    private TextType textType;
+    private ButtonType buttonType;
     
-    public ThemedButton(String text) {
-        this.text = text;
-
+    public ThemedButton(String text, TextType textType, FontSize size, int style, ButtonType buttonType) {
+        this.textType = textType;
+        this.buttonType = buttonType;
+        
         button = new JButton(text);
         button.setFocusPainted(false);
+        button.setFont(currentTheme.getBodyFont(size, style));
 
+        applyTheme()
         setLayout(new BorderLayout());
         add(button, BorderLayout.CENTER);
     }
     
     @Override
     protected void applyTheme() {
-        button.setBackground(currentTheme.getSurface());
-        button.setForeground(currentTheme.getTextPrimary());
-        button.setFont(currentTheme.getBodyFont());
-        
-        // Bordes redondeados (en Swing puro es más complejo, pero así se indica)
-        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        button.setBackground(currentTheme.getButtonColor(this.buttonType));
+        button.setForeground(currentTheme.getText(this.textType));
         
         // Color de hover (usando un listener extra)
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                button.setBackground(darken(currentTheme.getSurface(), 0.1));
+                button.setBackground(darken(getButtonColor(this.buttonType), 0.1));
             }
             
             @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
-                button.setBackground(currentTheme.getSurface());
+                button.setBackground(currentTheme.getButtonColor(this.buttonType));
             }
         });
     }

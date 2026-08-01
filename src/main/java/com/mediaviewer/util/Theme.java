@@ -3,8 +3,9 @@ package com.mediaviewer.util;
 import java.awt.Color;
 import java.awt.Font;
 
-public enum TextType  { PRIMARY, SECONDARY, TERTIARY, SUCCESS }
-public enum FontSize  { BIG, MED, SMALL }
+public enum TextType    { PRIMARY, SECONDARY, TERTIARY, SUCCESS }
+public enum ButtonType  { ACCENT, HIGHLIGHT, HIGHLIGHT2 }
+public enum FontSize    { BIG, MED, SMALL }
 
 public enum Theme {
     LIGHT {
@@ -59,6 +60,22 @@ public enum Theme {
                 break;
             case TextType.SUCCESS:
                 c = getSuccess();
+                break;
+        }
+        return c;
+    }
+
+    public Color getButtonColor(ButtonType type){
+        Color c;
+        switch(type){
+            case ButtonType.ACCENT:
+                c = getAccent();
+                break;
+            case ButtonType.HIGHLIGHT:
+                c = getHighLight();
+                break;
+            case ButtonType.HIGHLIGHT2:
+                c = getHighLight2();
                 break;
         }
         return c;

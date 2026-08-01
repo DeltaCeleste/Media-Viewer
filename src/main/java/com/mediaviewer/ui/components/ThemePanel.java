@@ -6,11 +6,14 @@ import java.awt.*;
 
 public class ThemedPanel extends ThemedComponent {
     private JPanel panel;
+    private Border borde = null;
     
-    public ThemedPanel(LayoutManager layout, boolean border) {
+    public ThemedPanel(LayoutManager layout, Border border) {
         super();
+        this.borde = border;
+        
         panel = new JPanel(layout);
-        //if(border == true) panel.setBorder();
+        panel.setBorder(border);
 
         applyTheme();
         setLaoyut(new BorderLayout());
@@ -28,10 +31,12 @@ public class ThemedPanel extends ThemedComponent {
     @Override
     protected void applyTheme() {
         panel.setBackground(this.currentTheme.getPanel());
-        /*panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(currentTheme.getDivider(), 1),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
-        ));*/
+        if(borde != null){
+            if(borde isntanceof MatteBorder){
+                MatteBorder mb = (MatteBorder) borde;
+                panel.setBorder(new MatteBorder(mb.getBorderInsets(), currentTheme.getBorder()));
+            }
+        }
     }
     
     public void add(Component comp, Object constraints) {

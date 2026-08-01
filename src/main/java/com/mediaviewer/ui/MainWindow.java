@@ -115,7 +115,7 @@ public class MainWindow extends JFrame {
         ThemedLabel logo = new ThemedLabel("Meδia Viewer", TextType.PRIMARY, FontSize.MED, Font.BOLD);
         topBar.add(logo);
 
-        JButton openBtn = highlightButton("Abrir carpeta");
+        ThemedButton openBtn = highlightButton("Abrir carpeta");
         openBtn.addActionListener(evt -> chooseDirectory());
         topBar.add(openBtn);
 
@@ -542,10 +542,7 @@ public class MainWindow extends JFrame {
      * @param text El texto del botón
      */
     private static JButton highlightButton(String text) {
-        JButton b = new JButton(text);
-        b.setBackground(Theme.HL);
-        b.setForeground(Theme.TEXT3);
-        b.setFont(Theme.FONT_SMALL_BOLD);
+        ThemedButton b = new ThemedButton(text, TextType.TERTIARY, FontSize.SMALL, Font.BOLD, ButtonType.HIGHLIGHT);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return b;
     }

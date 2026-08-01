@@ -14,7 +14,7 @@ import java.util.function.Supplier;
  * Notifica al controlador principal cada vez que cambia algo.
  */
 public class FilterBar extends JPanel {
-
+    private final ThemedPanel  mainPanel;
     private final JTextField   searchField;
     private final JComboBox<String> typeCombo;
     private final JComboBox<String> sortCombo;
@@ -24,15 +24,13 @@ public class FilterBar extends JPanel {
 
     public FilterBar(Runnable onChanged) {
         this.onChanged = onChanged;
-        setBackground(Theme.PANEL);
-        setLayout(new FlowLayout(FlowLayout.LEFT, 8, 6));
-        setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER));
+        mainPanel = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 8, 6), BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER));
+        setLaoyut(new BorderLayout());
+        add(mainPanel, BorderLayout.CENTER);
 
         // Icono búsqueda
-        JLabel searchIco = new JLabel("🔍");
-        searchIco.setFont(new Font(Theme.FONT_EMOJI, Font.PLAIN, 14));
-        searchIco.setForeground(Theme.TEXT);
-        add(searchIco);
+        ThemedLabel searchIco = new ThemedLabel("🔍", TextType.PRIMARY, FontSize.MED, Font.PLAIN);
+        mainPanel.add(searchIco);
 
         // Campo de texto
         searchField = new JTextField(20);
