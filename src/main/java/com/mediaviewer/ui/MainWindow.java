@@ -21,6 +21,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
+import com.ibm.icu.text.Collator;
+import com.ibm.icu.util.ULocale;
+
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -645,15 +648,18 @@ public class MainWindow extends JFrame {
         }
 
         // Ordenación
+        ULocale locale = new ULocale(ULocale.getDefault().getName() + "@colNumeric=yes");
+        Collator collator = Collator.getInstance(locale);
+        Comparator<String> naturalOrder = (s1, s2) -> collator.compare(s1, s2);
         Comparator<MediaFile> cmp = switch (opts.sortKey()) {
             case "Nombre ↓" -> Comparator.comparing(MediaFile::getName,
-                    String.CASE_INSENSITIVE_ORDER).reversed();
+                    naturalOrder).reversed();
             case "Fecha ↑" -> Comparator.comparingLong(MediaFile::getLastModified);
             case "Fecha ↓" -> Comparator.comparingLong(MediaFile::getLastModified).reversed();
             case "Tamaño ↑" -> Comparator.comparingLong(MediaFile::getSize);
             case "Tamaño ↓" -> Comparator.comparingLong(MediaFile::getSize).reversed();
             default -> Comparator.comparing(MediaFile::getName,
-                    String.CASE_INSENSITIVE_ORDER);
+                    naturalOrder);
         };
         items.sort(cmp);
 
