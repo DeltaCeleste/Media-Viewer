@@ -2,6 +2,7 @@ package com.mediaviewer.ui.panels;
 
 import com.mediaviewer.model.FilterOptions;
 import com.mediaviewer.util.Theme;
+import com.mediaviewer.ui.components.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -14,34 +15,30 @@ import java.util.function.Supplier;
  * Notifica al controlador principal cada vez que cambia algo.
  */
 public class FilterBar extends JPanel {
-    private final ThemedPanel  mainPanel;
-    private final JTextField   searchField;
-    private final JComboBox<String> typeCombo;
-    private final JComboBox<String> sortCombo;
+    private final ThemedPanel       mainPanel;
+    private final ThemedTextField   searchField;
+    private final ThemedComboBox    typeCombo;
+    private final ThemedComboBox    sortCombo;
     private final JCheckBox    recursiveBox;
-    private final JLabel       countLabel;
+    private final ThemedLabel       countLabel;
     private final Runnable     onChanged;
 
     public FilterBar(Runnable onChanged) {
         this.onChanged = onChanged;
-        mainPanel = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 8, 6), BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER));
+        mainPanel = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 8, 6), BorderFactory.createMatteBorder(0, 0, 1, 0));
         setLaoyut(new BorderLayout());
         add(mainPanel, BorderLayout.CENTER);
 
         // Icono búsqueda
-        ThemedLabel searchIco = new ThemedLabel("🔍", TextType.PRIMARY, FontSize.MED, Font.PLAIN);
+        ThemedLabel searchIco = new ThemedLabel("🔍", TextType.PRIMARY, FontSize.MED, Font.PLAIN, FontType.EMOJI);
         mainPanel.add(searchIco);
 
         // Campo de texto
-        searchField = new JTextField(20);
-        searchField.setBackground(Theme.INPUT);
-        searchField.setForeground(Theme.TEXT);
-        searchField.setCaretColor(Theme.TEXT);
-        searchField.setFont(Theme.FONT_SMALL);
-        searchField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Theme.BORDER),
-            BorderFactory.createEmptyBorder(3, 6, 3, 6)));
-        searchField.setToolTipText("Filtrar por nombre (texto parcial)");
+        Border b = BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(),
+            BorderFactory.createEmptyBorder(3, 6, 3, 6));
+        searchField = new ThemedTextField(20,"Filtrar por nombre (texto parcial)", b);
+        
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e)  { onChanged.run(); }
             public void removeUpdate(DocumentEvent e)  { onChanged.run(); }
@@ -51,13 +48,15 @@ public class FilterBar extends JPanel {
 
         // Tipo
         add(dimLabel("Tipo:"));
-        typeCombo = darkCombo("Todo", "Imágenes", "GIFs", "Videos");
+        
+        typeCombo = new ThemedComboBox(TextType.PRIMARY, FontSize.SMALL, Font.PLAIN, FontType.BASIC,
+                                       "Todo", "Imágenes", "GIFs", "Videos");
         typeCombo.addActionListener(e -> onChanged.run());
         add(typeCombo);
 
         // Ordenación
         add(dimLabel("Orden:"));
-        sortCombo = darkCombo(
+        sortCombo = ThemedComboBox(TextType.PRIMARY, FontSize.SMALL, Font.PLAIN, FontType.SYMBOL, 
             "Nombre ↑", "Nombre ↓",
             "Fecha ↑",  "Fecha ↓",
             "Tamaño ↑", "Tamaño ↓");
@@ -65,17 +64,12 @@ public class FilterBar extends JPanel {
         add(sortCombo);
 
         // Subcarpetas
-        recursiveBox = new JCheckBox("Subcarpetas");
-        recursiveBox.setBackground(Theme.PANEL);
-        recursiveBox.setForeground(Theme.TEXT);
-        recursiveBox.setFont(Theme.FONT_SMALL);
+        recursiveBox = new JCheckBox("Subcarpetas", TextType.PRIMARY, FontSize.SMALL, Font.PLAIN, FontType.BASIC);
         recursiveBox.addActionListener(e -> onChanged.run());
         add(recursiveBox);
 
         // Contador (a la derecha)
-        countLabel = new JLabel("—");
-        countLabel.setForeground(Theme.TEXT2);
-        countLabel.setFont(Theme.FONT_SMALL);
+        countLabel = new ThemedLabel("—", TextType.SECONDARY, FontSize.SMALL, Font.PLAIN, FontType.BASIC);
         add(Box.createHorizontalStrut(20));
         add(countLabel);
     }
@@ -102,21 +96,8 @@ public class FilterBar extends JPanel {
     /**
      * @brief Crea una una etiqueta de texto secundario
      */
-    private static JLabel dimLabel(String text) {
-        JLabel l = new JLabel(text);
-        l.setForeground(Theme.TEXT2);
-        l.setFont(Theme.FONT_SMALL);
+    private static ThemedLabel dimLabel(String text) {
+        ThemedLabel l = new ThemedLabel(text, TextType.SECONDARY, FontSize.SMALL, Font.PLAIN, FontType.BASIC);
         return l;
-    }
-
-    /**
-     * @brief Crea un menú desplegable
-     */
-    private static JComboBox<String> darkCombo(String... items) {
-        JComboBox<String> cb = new JComboBox<>(items);
-        cb.setBackground(Theme.INPUT);
-        cb.setForeground(Theme.TEXT);
-        cb.setFont(Theme.FONT_SMALL);
-        return cb;
     }
 }

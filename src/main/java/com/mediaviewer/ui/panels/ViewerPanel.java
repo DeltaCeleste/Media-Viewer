@@ -1,7 +1,10 @@
 package com.mediaviewer.ui.panels;
 
 import com.mediaviewer.model.MediaFile;
+import com.mediaviewer.util.ThemeManager;
 import com.mediaviewer.util.Theme;
+import com.mediaviewer.util.ThemeUtils;
+import com.mediaviewer.ui.components.*;
 import net.coobird.thumbnailator.Thumbnails;
 
 import javax.imageio.ImageIO;
@@ -23,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *  - SwingUtilities.invokeLater() entrega el resultado al EDT.
  *  - paintComponent() solo lee campos volátiles.
  */
-public class ViewerPanel extends JPanel {
+public class ViewerPanel extends ThemedPanel {
     public static final int VIDEO_LOAD_TIME = 1000;
 
     // ── Estado compartido (volatile = visibilidad entre hilos) ───────────────
@@ -63,17 +66,16 @@ public class ViewerPanel extends JPanel {
     private int   panOffX0, panOffY0;
 
     // ── Callback ─────────────────────────────────────────────────────────────
-    private JLabel statusLabel;   // inyectado desde fuera
+    private ThemedLabel statusLabel;   // inyectado desde fuera
 
     public ViewerPanel() {
-        setBackground(Theme.BG);
-        setLayout(new BorderLayout());
+        super(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND);
         setupMouse();
         setupSpinner();
     }
 
-    public void setStatusLabel(JLabel lbl) { this.statusLabel = lbl; }
-    public MediaFile getCurrent()          { return this.current; }
+    public void setStatusLabel(ThemedLabel lbl) { this.statusLabel = lbl; }
+    public MediaFile getCurrent()               { return this.current; }
 
     // ── Carga pública ────────────────────────────────────────────────────────
     /**
@@ -178,9 +180,7 @@ public class ViewerPanel extends JPanel {
                     // Mostrar con JLabel centrado
                     if (gifLabel != null) remove(gifLabel);
                     gifLabel = new JLabel(icon, SwingConstants.CENTER);
-                    gifLabel.setBackground(Theme.BG);
-                    gifLabel.setOpaque(true);
-                    add(gifLabel, BorderLayout.CENTER);
+                    addToPanel(gifLabel, BorderLayout.CENTER);
                     revalidate();
                     repaint();
                     int w = icon.getIconWidth();
@@ -226,37 +226,34 @@ public class ViewerPanel extends JPanel {
         updateStatus(infoText);
 
         // Panel especial con botón abrir
-        JPanel ph = new JPanel(new GridBagLayout());
-        ph.setBackground(Theme.BG);
+        ThemedPanel ph = new ThemedPanel(new GridBagLayout(), ThemeUtils.PanelType.BACKGROUND);
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0; c.insets = new Insets(6,0,6,0);
 
         c.gridy = 0;
-        JLabel ico = new JLabel("🎬", SwingConstants.CENTER);
-        ico.setFont(new Font(Theme.FONT_EMOJI, Font.PLAIN, 72));
-        ico.setForeground(Theme.TEXT2);
-        ph.add(ico, c);
+        ThemedLabel ico = new ThemedLabel("🎬", SwingConstants.CENTER, ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.ENORMOUS, Font.PLAIN, ThemeUtils.FontType.EMOJI);
+        ph.addToPanel(ico, c);
 
         c.gridy = 1;
-        JLabel nameLbl = new JLabel(mf.getName(), SwingConstants.CENTER);
-        nameLbl.setFont(Theme.FONT_SMALL);
-        nameLbl.setForeground(Theme.TEXT);
-        ph.add(nameLbl, c);
+        ThemedLabel nameLbl = new ThemedLabel(mf.getName(), SwingConstants.CENTER, ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
+        ph.addToPanel(nameLbl, c);
 
         c.gridy = 2;
-        JLabel hint = new JLabel("Doble clic o botón para abrir con el sistema",
-                                  SwingConstants.CENTER);
-        hint.setFont(Theme.FONT_SMALL);
-        hint.setForeground(Theme.TEXT2);
-        ph.add(hint, c);
+        ThemedLabel hint = new ThemedLabel("Doble clic o botón para abrir con el sistema",
+                                  SwingConstants.CENTER, ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
+        ph.addToPanel(hint, c);
 
         c.gridy = 3;
-        JButton openBtn = styledButton("▶  Abrir video");
-        openBtn.addActionListener(evt -> openExternally(mf.getFile()));
-        ph.add(openBtn, c);
+        ThemedButton openBtn = new ThemedButton("▶  Abrir video", ThemeUtils.TextType.TERTIARY, ThemeUtils.FontSize.SMALL, Font.BOLD, ThemeUtils.FontType.SYMBOL, ThemeUtils.ButtonType.HIGHLIGHT);
+        openBtn.setBorderPainted(false);
+        openBtn.setFocusPainted(false);
+        openBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        openBtn.setOpaque(true);
+        openBtn.getButton().addActionListener(evt -> openExternally(mf.getFile()));
+        ph.addToPanel(openBtn, c);
 
         removeAll();
-        add(ph, BorderLayout.CENTER);
+        addToPanel(ph, BorderLayout.CENTER);
         revalidate();
         repaint();
     }
@@ -278,7 +275,7 @@ public class ViewerPanel extends JPanel {
                         videoPanel.setStatusLabel(statusLabel);
                         if (loadGen.get() != gen) return;
                             try {
-                                add(videoPanel, BorderLayout.CENTER);
+                                addToPanel(videoPanel, BorderLayout.CENTER);
                                 revalidate();
                                 repaint();
                                 infoText = "Video";
@@ -326,7 +323,7 @@ public class ViewerPanel extends JPanel {
                             RenderingHints.VALUE_RENDER_QUALITY);
 
         if (loading) {
-            drawCentered(g2, SPIN[spinIdx % 8], Theme.HL, 28);
+            drawCentered(g2, SPIN[spinIdx % 8], ThemeManager.getInstance().getCurrentTheme().getHighLight(), 28);
             return;
         }
 
@@ -370,7 +367,7 @@ public class ViewerPanel extends JPanel {
 
     private void drawCentered(Graphics2D g, String text, Color color, int size) {
         g.setColor(color);
-        g.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, size));
+        g.setFont(new Font(ThemeManager.getInstance().getCurrentTheme().getFontNameSymbol(), Font.PLAIN, size));
         FontMetrics fm = g.getFontMetrics();
         int x = (getWidth()  - fm.stringWidth(text)) / 2;
         int y = (getHeight() + fm.getAscent()) / 2;
@@ -466,23 +463,6 @@ public class ViewerPanel extends JPanel {
                 "No se pudo abrir: " + ex.getMessage(), "Error",
                 JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    /**
-     * @brief Genera un botón con estilo concreto
-     * @param text La etiqueta del botón
-     * @return el botón
-     */
-    private static JButton styledButton(String text) {
-        JButton b = new JButton(text);
-        b.setBackground(Theme.HL);
-        b.setForeground(Theme.TEXT3);
-        b.setFont(new Font(Theme.FONT_SYMBOL, Font.BOLD, 11));
-        b.setBorderPainted(false);
-        b.setFocusPainted(false);
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        b.setOpaque(true);
-        return b;
     }
 
     /** 

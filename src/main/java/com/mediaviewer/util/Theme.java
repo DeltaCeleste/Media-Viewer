@@ -3,10 +3,6 @@ package com.mediaviewer.util;
 import java.awt.Color;
 import java.awt.Font;
 
-public enum TextType    { PRIMARY, SECONDARY, TERTIARY, SUCCESS }
-public enum ButtonType  { ACCENT, HIGHLIGHT, HIGHLIGHT2 }
-public enum FontSize    { BIG, MED, SMALL }
-
 public enum Theme {
     LIGHT {
         @Override public abstract Color getBackground() { return hex("#DFEFFF"); }
@@ -46,36 +42,70 @@ public enum Theme {
     public abstract Color getBorder();
     public abstract Color getInput();
 
-    public Color getText(TextType type){
+    public Color getBG(ThemeUtils.PanelType type){
         Color c;
         switch(type){
-            case TextType.PRIMARY:
-                c = getText1();
+            case ThemeUtils.PanelType.PANEL:
+                c = getPanel();
                 break;
-            case TextType.SECONDARY:
-                c = getText2();
+            case ThemeUtils.PanelType.BACKGROUND:
+                c = getBackground();
                 break;
-            case TextType.TERTIARY:
-                c = getText3();
+            case ThemeUtils.PanelType.HIGHLIGHT:
+                c = getHighLight();
                 break;
-            case TextType.SUCCESS:
-                c = getSuccess();
+            default:
+                c = getPanel();
                 break;
         }
         return c;
     }
 
-    public Color getButtonColor(ButtonType type){
+    public Color getText(ThemeUtils.TextType type){
         Color c;
         switch(type){
-            case ButtonType.ACCENT:
+            case ThemeUtils.TextType.PRIMARY:
+                c = getText1();
+                break;
+            case ThemeUtils.TextType.SECONDARY:
+                c = getText2();
+                break;
+            case ThemeUtils.TextType.TERTIARY:
+                c = getText3();
+                break;
+            case ThemeUtils.TextType.SUCCESS:
+                c = getSuccess();
+                break;
+            case ThemeUtils.TextType.ERROR:
+                c = getError();
+                break;
+            default:
+                c = getText1();
+                break;
+        }
+        return c;
+    }
+
+    public Color getButtonColor(ThemeUtils.ButtonType type){
+        Color c;
+        switch(type){
+            case ThemeUtils.ButtonType.ACCENT:
                 c = getAccent();
                 break;
-            case ButtonType.HIGHLIGHT:
+            case ThemeUtils.ButtonType.HIGHLIGHT:
                 c = getHighLight();
                 break;
-            case ButtonType.HIGHLIGHT2:
+            case ThemeUtils.ButtonType.HIGHLIGHT2:
                 c = getHighLight2();
+                break;
+            case ThemeUtils.ButtonType.PANEL:
+                c = getPanel();
+                break;
+            case ThemeUtils.ButtonType.BACKGROUND:
+                c = getBackground();
+                break;
+            default:
+                c = getAccent();
                 break;
         }
         return c;
@@ -99,21 +129,49 @@ public enum Theme {
     public Font getFontSmall()      { return new Font(getFontNameSymbol(), Font.PLAIN, 11); }
     public Font getFontMono()       { return new Font(getFontNameMono(),   Font.PLAIN, 12); }
 
-    public Font getFont(FontSize size, FontStyle style){
+    public String getFontName(ThemeUtils.FontType type){
+        String s;
+        switch(type){
+            case ThemeUtils.FontType.BASIC:
+                s = getFontNameDefault();
+                break;
+            case ThemeUtils.FontType.SYMBOL:
+                s = getFontNameSymbol();
+                break;
+            case ThemeUtils.FontType.EMOJI:
+                s = getFontNameEmoji();
+                break; 
+            case ThemeUtils.FontType.Mono:
+                s = getFontNameMono();
+                break; 
+            default:
+                s = getFontNameDefault();
+                break;
+        }
+        return s;
+    }
+    
+    public Font getFont(ThemeUtils.FontSize size, int style, ThemeUtils.FontType type){
         int s;
         switch(size){
-            case FontSize.BIG:
+            case ThemeUtils.FontSize.ENORMOUS:
+                s = 72;
+                break;
+            case ThemeUtils.FontSize.BIG:
                 s = 18;
                 break;
-            case FontSize.MED:
+            case ThemeUtils.FontSize.MED:
                 s = 14;
                 break; 
-            case FontSize.SMALL:
+            case ThemeUtils.FontSize.SMALL:
                 s = 11;
+                break; 
+            default:
+                s = 14;
                 break;  
         }
 
-        return new Font(getFontNameSymbol(), style, s);
+        return new Font(getFontName(type), style, s);
     }
 
     // Para debugging

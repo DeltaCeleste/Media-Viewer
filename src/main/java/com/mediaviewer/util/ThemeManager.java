@@ -20,7 +20,7 @@ public class ThemeManager {
     }
     
     // Cambiar tema con validación
-    public void setTheme(Theme theme) {
+    public static void setTheme(Theme theme) {
         if (theme == null) {
             throw new IllegalArgumentException("Theme cannot be null");
         }

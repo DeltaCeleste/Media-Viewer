@@ -1,23 +1,27 @@
 package com.mediaviewer.ui.components;
 
 import com.mediaviewer.util.Theme;
+import com.mediaviewer.util.ThemeUtils;
+
 import javax.swing.*;
+import javax.swing.border.*;
 import java.awt.*;
 
 public class ThemedButton extends ThemedComponent {
     private JButton button;
-    private TextType textType;
-    private ButtonType buttonType;
+    private ThemeUtils.TextType textType;
+    private ThemeUtils.ButtonType buttonType;
     
-    public ThemedButton(String text, TextType textType, FontSize size, int style, ButtonType buttonType) {
+    public ThemedButton(String text, ThemeUtils.TextType textType, ThemeUtils.FontSize size, int style, ThemeUtils.FontType ftype, ThemeUtils.ButtonType buttonType) {
+        super();
         this.textType = textType;
         this.buttonType = buttonType;
         
         button = new JButton(text);
         button.setFocusPainted(false);
-        button.setFont(currentTheme.getBodyFont(size, style));
+        button.setFont(currentTheme.getFont(size, style, ftype));
 
-        applyTheme()
+        applyTheme();
         setLayout(new BorderLayout());
         add(button, BorderLayout.CENTER);
     }
@@ -50,5 +54,29 @@ public class ThemedButton extends ThemedComponent {
     
     public JButton getButton() {
         return button;
+    }
+
+    public void setBorder(Border b){
+        button.setBorder(b);
+    }
+
+    public void setBorderPainted(boolean b){
+        button.setBorderPainted(b);
+    }
+
+    public void setOpaque(boolean b){
+        button.setOpaque(b);
+    }
+
+    public void setFocusPainted(boolean b){
+        button.setFocusPainted(b);
+    }
+
+    public void setPreferredSize(Dimension d){
+        button.setPreferredSize(d);
+    }
+
+    public void setCursor(Cursor c){
+        button.setCursor(c);
     }
 }

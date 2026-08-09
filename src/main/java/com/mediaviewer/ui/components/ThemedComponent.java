@@ -1,5 +1,8 @@
 package com.mediaviewer.ui.components;
 
+import com.mediaviewer.util.ThemeManager;
+import com.mediaviewer.util.Theme;
+
 import javax.swing.*;
 import java.awt.*;
 

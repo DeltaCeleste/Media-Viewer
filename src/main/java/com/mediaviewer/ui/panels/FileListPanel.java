@@ -26,13 +26,13 @@ public class FileListPanel extends JPanel {
     public FileListPanel(IntConsumer onSelect) {
         this.onSelect = onSelect;
         setLayout(new BorderLayout());
-        setBackground(Theme.PANEL);
+        //setBackground(Theme.PANEL);
 
         // ── Cabecera ─────────────────────────────────────────────────────────
         JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
-        header.setBackground(Theme.HL2);
+        //header.setBackground(Theme.HL2);
         JLabel title = new JLabel("📂  ARCHIVOS");
-        title.setForeground(Theme.TEXT);
+        //title.setForeground(Theme.TEXT);
         title.setFont(new Font("Segoe UI", Font.BOLD, 11));
         header.add(title);
         add(header, BorderLayout.NORTH);
@@ -52,23 +52,23 @@ public class FileListPanel extends JPanel {
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createEmptyBorder());
-        sp.getViewport().setBackground(Theme.PANEL);
-        sp.setBackground(Theme.PANEL);
+        //sp.getViewport().setBackground(Theme.PANEL);
+        //sp.setBackground(Theme.PANEL);
         add(sp, BorderLayout.CENTER);
     }
 
     private void styleTable() {
-        table.setBackground(Theme.PANEL);
-        table.setForeground(Theme.TEXT);
-        table.setSelectionBackground(Theme.HL);
+        //table.setBackground(Theme.PANEL);
+        //table.setForeground(Theme.TEXT);
+        //table.setSelectionBackground(Theme.HL);
         table.setSelectionForeground(Color.WHITE);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         table.setRowHeight(26);
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(0, 0));
         table.setFillsViewportHeight(true);
-        table.getTableHeader().setBackground(Theme.ACCENT);
-        table.getTableHeader().setForeground(Theme.TEXT);
+        //table.getTableHeader().setBackground(Theme.ACCENT);
+        //table.getTableHeader().setForeground(Theme.TEXT);
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 10));
         table.getTableHeader().setBorder(BorderFactory.createEmptyBorder());
 
@@ -83,10 +83,10 @@ public class FileListPanel extends JPanel {
             @Override public Component getTableCellRendererComponent(
                     JTable t, Object val, boolean sel, boolean foc, int r, int c) {
                 super.getTableCellRendererComponent(t, val, sel, foc, r, c);
-                if (!sel) {
+                /*if (!sel) {
                     setBackground(r % 2 == 0 ? Theme.PANEL : Theme.ACCENT);
                     setForeground(Theme.TEXT);
-                }
+                }*/
                 setBorder(new javax.swing.border.EmptyBorder(0, 4, 0, 4));
                 return this;
             }
