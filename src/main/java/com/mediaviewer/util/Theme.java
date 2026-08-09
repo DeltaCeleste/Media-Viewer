@@ -5,29 +5,29 @@ import java.awt.Font;
 
 public enum Theme {
     LIGHT {
-        @Override public abstract Color getBackground() { return hex("#DFEFFF"); }
-        @Override public abstract Color getPanel()      { return hex("#C3E0FA"); }
-        @Override public abstract Color getAccent()     { return hex("#6B7C93"); }
-        @Override public abstract Color getHighLight()  { return hex("#0284C7"); }
-        @Override public abstract Color getHighLight2() { return hex("#06B6D4"); }
-        @Override public abstract Color getText()       { return hex("#0F172A"); }
-        @Override public abstract Color getText2()      { return hex("#64748B"); }
-        @Override public abstract Color getText3()      { return hex("#FFFFFF"); }
-        @Override public abstract Color getBorder()     { return hex("#A0A8C0"); }
-        @Override public abstract Color getInput()      { return hex("#EAF0F6"); }
+        @Override public Color getBackground() { return hex("#DFEFFF"); }
+        @Override public Color getPanel()      { return hex("#C3E0FA"); }
+        @Override public Color getAccent()     { return hex("#6B7C93"); }
+        @Override public Color getHighLight()  { return hex("#0284C7"); }
+        @Override public Color getHighLight2() { return hex("#06B6D4"); }
+        @Override public Color getText()       { return hex("#0F172A"); }
+        @Override public Color getText2()      { return hex("#64748B"); }
+        @Override public Color getText3()      { return hex("#FFFFFF"); }
+        @Override public Color getBorder()     { return hex("#A0A8C0"); }
+        @Override public Color getInput()      { return hex("#EAF0F6"); }
     },
     
     DARK {
-        @Override public abstract Color getBackground() { return hex("#0B131F"); }
-        @Override public abstract Color getPanel()      { return hex("#142232"); }
-        @Override public abstract Color getAccent()     { return hex("#607B96"); }
-        @Override public abstract Color getHighLight()  { return hex("#0EA5E9"); }
-        @Override public abstract Color getHighLight2() { return hex("#38BDF8"); }
-        @Override public abstract Color getText()       { return hex("#F0F6FC"); }
-        @Override public abstract Color getText2()      { return hex("#8B9DAE"); }
-        @Override public abstract Color getText3()      { return hex("#060D17"); }
-        @Override public abstract Color getBorder()     { return hex("#213448"); }
-        @Override public abstract Color getInput()      { return hex("#1B2B3E"); }
+        @Override public Color getBackground() { return hex("#0B131F"); }
+        @Override public Color getPanel()      { return hex("#142232"); }
+        @Override public Color getAccent()     { return hex("#607B96"); }
+        @Override public Color getHighLight()  { return hex("#0EA5E9"); }
+        @Override public Color getHighLight2() { return hex("#38BDF8"); }
+        @Override public Color getText()       { return hex("#F0F6FC"); }
+        @Override public Color getText2()      { return hex("#8B9DAE"); }
+        @Override public Color getText3()      { return hex("#060D17"); }
+        @Override public Color getBorder()     { return hex("#213448"); }
+        @Override public Color getInput()      { return hex("#1B2B3E"); }
     };
     
     // Métodos abstractos que cada enum debe implementar
