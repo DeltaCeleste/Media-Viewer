@@ -7,8 +7,8 @@ import java.util.List;
 
 public class ThemeManager {
     private static ThemeManager instance;
-    private Theme currentTheme = Theme.LIGHT;
-    private final List<ThemeListener> listeners = new ArrayList<>();
+    private static Theme currentTheme = Theme.LIGHT;
+    private static final List<ThemeListener> listeners = new ArrayList<>();
     
     private ThemeManager() {}
     
@@ -25,8 +25,8 @@ public class ThemeManager {
             throw new IllegalArgumentException("Theme cannot be null");
         }
         
-        if (this.currentTheme != theme) {
-            this.currentTheme = theme;
+        if (currentTheme != theme) {
+            currentTheme = theme;
             notifyListeners();
         }
     }
@@ -63,7 +63,7 @@ public class ThemeManager {
         listeners.remove(listener);
     }
     
-    private void notifyListeners() {
+    private static void notifyListeners() {
         for (ThemeListener listener : listeners) {
             listener.onThemeChanged(currentTheme);
         }

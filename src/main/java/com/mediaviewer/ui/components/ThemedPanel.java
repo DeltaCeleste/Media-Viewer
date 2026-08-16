@@ -81,4 +81,13 @@ public class ThemedPanel extends ThemedComponent {
     public void setCursor(Cursor c){
         panel.setCursor(c);
     }
+
+    public void setBackgroundType(ThemeUtils.PanelType t){
+        this.bgType = t;
+        panel.setBackground(currentTheme.getBG(bgType));
+    }
+
+    public Rectangle getBounds(){
+        return this.panel.getBounds();
+    }
 }

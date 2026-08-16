@@ -116,10 +116,10 @@ public enum Theme {
     public Color getError()   { return hex("#E11D18"); }
     public Color getWarning() { return hex("#E1AD18"); }
 
-    public Font getFontNameDefault() { return "Segoe UI ";       }
-    public Font getFontNameSymbol()  { return "Segoe UI Symbol"; }
-    public Font getFontNameEmoji()   { return "Segoe UI Emoji";  }
-    public Font getFontNameMono()    { return "Consolas";        }
+    public String getFontNameDefault() { return "Segoe UI ";       }
+    public String getFontNameSymbol()  { return "Segoe UI Symbol"; }
+    public String getFontNameEmoji()   { return "Segoe UI Emoji";  }
+    public String getFontNameMono()    { return "Consolas";        }
 
     public Font getFontBigBold()    { return new Font(getFontNameSymbol(), Font.BOLD,  18); }
     public Font getFontBig()        { return new Font(getFontNameSymbol(), Font.PLAIN, 18); }

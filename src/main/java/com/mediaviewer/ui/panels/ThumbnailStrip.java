@@ -46,17 +46,17 @@ public class ThumbnailStrip extends ThemedPanel {
     private ThemedPanel[]   cells;
 
     public ThumbnailStrip(IntConsumer onSelect) {
+        super(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND);
         this.onSelect = onSelect;
-        super(new BorderLayout(), PanelType.BACKGROUND);
 
-        inner = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 3, 4), PanelType.BACKGROUND);
+        inner = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 3, 4), ThemeUtils.PanelType.BACKGROUND);
 
-        scroll = new JScrollPane(inner,
+        scroll = new ThemedScroll(inner,
             JScrollPane.VERTICAL_SCROLLBAR_NEVER,
             JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scroll.getHorizontalScrollBar().setUnitIncrement(24);
         scroll.setBorder(null);
-        scroll.setBackground(PanelType.BACKGROUND);
+        scroll.setBackground(ThemeUtils.PanelType.BACKGROUND);
 
         // Scroll horizontal con rueda del ratón
         scroll.addMouseWheelListener(e -> {
@@ -77,11 +77,11 @@ public class ThumbnailStrip extends ThemedPanel {
         int gen = genCounter.incrementAndGet(); // invalida todos los callbacks previos
         this.items   = newItems;
         this.current = initialIdx;
-        this.cells   = new ThemePanel[newItems.size()];
+        this.cells   = new ThemedPanel[newItems.size()];
 
         inner.removeAll();
         for (int i = 0; i < newItems.size(); i++) {
-            ThemePanel cell = buildCell(i, gen);
+            ThemedPanel cell = buildCell(i, gen);
             cells[i] = cell;
             inner.add(cell);
         }
@@ -101,17 +101,17 @@ public class ThumbnailStrip extends ThemedPanel {
     private ThemedPanel buildCell(int idx, int gen) {
         MediaFile mf = items.get(idx);
 
-        ThemedPanel cell = new ThemedPanel(new BorderLayout(), PanelType.BACKGROUND);
+        ThemedPanel cell = new ThemedPanel(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND);
         cell.setPreferredSize(new Dimension(TW + 4, TH + 22));
         cell.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         // Label para imagen
-        ThemedLabel imgLbl = new ThemedLabel("…", SwingConstants.CENTER, ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.BIG, Font.PLAIN, ThemeUtils.FontStyle.BASIC);
+        ThemedLabel imgLbl = new ThemedLabel("…", SwingConstants.CENTER, ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.BIG, Font.PLAIN, ThemeUtils.FontType.BASIC);
         imgLbl.setPreferredSize(new Dimension(TW, TH));
         imgLbl.setHorizontalAlignment(SwingConstants.CENTER);
 
         // Label de nombre
-        JLabel nameLbl = new JLabel(truncate(mf.getName(), 14), SwingConstants.CENTER, ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontStyle.BASIC);
+        ThemedLabel nameLbl = new ThemedLabel(truncate(mf.getName(), 14), SwingConstants.CENTER, ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
 
         cell.add(imgLbl, BorderLayout.CENTER);
         cell.add(nameLbl, BorderLayout.SOUTH);
@@ -141,7 +141,7 @@ public class ThumbnailStrip extends ThemedPanel {
      * @param gen El contador que representa el número de la orden actual, si no coincide con el contador actual
      *            la generación se desestima por estar desactualizada
      */
-    private void loadThumb(MediaFile mf, JLabel lbl, int gen) {
+    private void loadThumb(MediaFile mf, ThemedLabel lbl, int gen) {
         if (genCounter.get() != gen) return;
         try {
             BufferedImage thumb = Thumbnails.of(mf.getFile())
@@ -235,11 +235,11 @@ public class ThumbnailStrip extends ThemedPanel {
      * @param bg El color de fondo al que se va a cambiar
      */
     private void setAllBg(Container c, ThemeUtils.PanelType bg, ThemeUtils.TextType txt) {
-        c.setBackground(bg);
+        ((ThemedPanel)c).setBackgroundType(bg);
         for (Component ch : c.getComponents()) {
-            ch.setBackground(bg);
+            //ch.setBackground(bg);
             if (ch instanceof Container) setAllBg((Container)ch, bg, txt);
-            if (ch instanceof ThemedLabel) ch.setForeground(txt);
+            if (ch instanceof ThemedLabel) ((ThemedLabel)ch).setForeground(txt);
         }
     }
 
@@ -250,7 +250,7 @@ public class ThumbnailStrip extends ThemedPanel {
     private void scrollToCell(int idx) {
         if (cells == null || idx < 0 || idx >= cells.length) return;
         SwingUtilities.invokeLater(() -> {
-            JPanel cell = cells[idx];
+            ThemedPanel cell = cells[idx];
             if (cell != null) inner.scrollRectToVisible(cell.getBounds());
         });
     }

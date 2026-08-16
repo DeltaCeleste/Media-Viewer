@@ -68,4 +68,8 @@ public class ThemedLabel extends ThemedComponent {
         this.type = type;
         label.setForeground(currentTheme.getText(type));
     }
+
+    public void setIcon(Icon i){
+        this.label.setIcon(i);
+    }
 }

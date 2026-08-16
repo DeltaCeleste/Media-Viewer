@@ -5,6 +5,7 @@ import com.mediaviewer.util.ThemeUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class ThemedCheckBox extends ThemedComponent {
     private JCheckBox box;
@@ -20,12 +21,20 @@ public class ThemedCheckBox extends ThemedComponent {
 
         applyTheme();
         setLayout(new BorderLayout());
-        add(cb, BorderLayout.CENTER);
+        add(box, BorderLayout.CENTER);
     }
     
     @Override
     protected void applyTheme() {
-        cb.setBackground(currentTheme.getPanel());
-        cb.setForeground(currentTheme.getText(this.type));  
+        box.setBackground(currentTheme.getPanel());
+        box.setForeground(currentTheme.getText(this.type));  
+    }
+
+    public void addActionListener(ActionListener listener) {
+        this.box.addActionListener(listener);
+    }
+
+    public boolean isSelected(){
+        return box.isSelected();
     }
 }

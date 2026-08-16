@@ -5,6 +5,7 @@ import com.mediaviewer.util.ThemeUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class ThemedComboBox extends ThemedComponent {
     private JComboBox<String> cb;
@@ -27,5 +28,13 @@ public class ThemedComboBox extends ThemedComponent {
     protected void applyTheme() {
         cb.setBackground(currentTheme.getInput());
         cb.setForeground(currentTheme.getText(this.type));  
+    }
+
+    public void addActionListener(ActionListener listener) {
+        this.cb.addActionListener(listener);
+    }
+
+    public String getSelectedItem(){
+        return cb.getSelectedItem();
     }
 }
