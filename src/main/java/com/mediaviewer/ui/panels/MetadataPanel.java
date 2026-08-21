@@ -41,14 +41,14 @@ public class MetadataPanel extends JPanel {
     public MetadataPanel(Consumer<MediaFile> onSaved) {
         this.onSaved = onSaved;
         setLayout(new BorderLayout());
-        setBackground(Theme.PANEL);
+        //setBackground(Theme.PANEL);
         setPreferredSize(new Dimension(290, 0));
 
         // ── Cabecera ─────────────────────────────────────────────────────────
         JPanel hdr = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
-        hdr.setBackground(Theme.HL2);
+        //hdr.setBackground(Theme.HL2);
         JLabel title = new JLabel("📋  METADATOS");
-        title.setForeground(Theme.TEXT);
+        //title.setForeground(Theme.TEXT);
         title.setFont(new Font("Segoe UI", Font.BOLD, 11));
         hdr.add(title);
         add(hdr, BorderLayout.NORTH);
@@ -56,7 +56,7 @@ public class MetadataPanel extends JPanel {
         // ── Panel central (scroll) ───────────────────────────────────────────
         JPanel center = new JPanel();
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
-        center.setBackground(Theme.PANEL);
+        //center.setBackground(Theme.PANEL);
 
         // Nombre
         JPanel nameRow = row("Nombre:");
@@ -77,22 +77,22 @@ public class MetadataPanel extends JPanel {
         });
         JScrollPane sp = new JScrollPane(tree);
         sp.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
-        sp.setBackground(Theme.PANEL);
-        sp.getViewport().setBackground(Theme.PANEL);
+        //sp.setBackground(Theme.PANEL);
+        //sp.getViewport().setBackground(Theme.PANEL);
         sp.setPreferredSize(new Dimension(0, 260));
         center.add(sp);
         center.add(vgap(4));
 
         // Separador
         JSeparator sep = new JSeparator();
-        sep.setForeground(Theme.BORDER);
+        //sep.setForeground(Theme.BORDER);
         sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
         center.add(sep);
         center.add(vgap(4));
 
         // Campos editables
         JLabel editTitle = new JLabel("  Editar etiquetas");
-        editTitle.setForeground(Theme.TEXT2);
+        //editTitle.setForeground(Theme.TEXT2);
         editTitle.setFont(new Font("Segoe UI", Font.ITALIC, 9));
         editTitle.setAlignmentX(0);
         center.add(editTitle);
@@ -111,18 +111,18 @@ public class MetadataPanel extends JPanel {
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         centerScroll.setBorder(null);
-        centerScroll.setBackground(Theme.PANEL);
-        centerScroll.getViewport().setBackground(Theme.PANEL);
+        //centerScroll.setBackground(Theme.PANEL);
+        //centerScroll.getViewport().setBackground(Theme.PANEL);
         add(centerScroll, BorderLayout.CENTER);
 
         // ── Footer ───────────────────────────────────────────────────────────
         JPanel footer = new JPanel();
         footer.setLayout(new BoxLayout(footer, BoxLayout.Y_AXIS));
-        footer.setBackground(Theme.PANEL);
+        //footer.setBackground(Theme.PANEL);
         footer.setBorder(BorderFactory.createEmptyBorder(4, 6, 6, 6));
 
         JButton saveBtn = new JButton("💾  Guardar cambios");
-        saveBtn.setBackground(Theme.HL);
+        //saveBtn.setBackground(Theme.HL);
         saveBtn.setForeground(Color.WHITE);
         saveBtn.setFont(new Font("Segoe UI", Font.BOLD, 11));
         saveBtn.setBorderPainted(false);
@@ -137,7 +137,7 @@ public class MetadataPanel extends JPanel {
 
         statusLbl = new JLabel(" ");
         statusLbl.setFont(new Font("Segoe UI", Font.PLAIN, 9));
-        statusLbl.setForeground(Theme.SUCCESS);
+        //statusLbl.setForeground(Theme.SUCCESS);
         statusLbl.setAlignmentX(0.5f);
         footer.add(statusLbl);
 
@@ -255,29 +255,29 @@ public class MetadataPanel extends JPanel {
     // ── Estilo ────────────────────────────────────────────────────────────────
 
     private void styleTree() {
-        tree.setBackground(Theme.PANEL);
-        tree.setForeground(Theme.TEXT);
+        //tree.setBackground(Theme.PANEL);
+        //tree.setForeground(Theme.TEXT);
         tree.setFont(new Font("Segoe UI", Font.PLAIN, 9));
         tree.setRowHeight(20);
         tree.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         tree.setRootVisible(false);
         tree.setShowsRootHandles(true);
         DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
-        renderer.setBackgroundNonSelectionColor(Theme.PANEL);
-        renderer.setBackgroundSelectionColor(Theme.HL2);
-        renderer.setTextNonSelectionColor(Theme.TEXT);
+        //renderer.setBackgroundNonSelectionColor(Theme.PANEL);
+        //renderer.setBackgroundSelectionColor(Theme.HL2);
+        //renderer.setTextNonSelectionColor(Theme.TEXT);
         renderer.setTextSelectionColor(Color.WHITE);
-        renderer.setBorderSelectionColor(Theme.HL2);
+        //renderer.setBorderSelectionColor(Theme.HL2);
         tree.setCellRenderer(renderer);
     }
 
     private static JPanel row(String label) {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
-        p.setBackground(Theme.PANEL);
+        //p.setBackground(Theme.PANEL);
         p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
         p.setAlignmentX(0);
         JLabel lbl = new JLabel(label);
-        lbl.setForeground(Theme.TEXT2);
+        //lbl.setForeground(Theme.TEXT2);
         lbl.setFont(new Font("Segoe UI", Font.PLAIN, 9));
         lbl.setPreferredSize(new Dimension(72, 18));
         p.add(lbl);
@@ -286,12 +286,12 @@ public class MetadataPanel extends JPanel {
 
     private static JTextField darkField() {
         JTextField tf = new JTextField(16);
-        tf.setBackground(Theme.INPUT);
-        tf.setForeground(Theme.TEXT);
-        tf.setCaretColor(Theme.TEXT);
-        tf.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Theme.BORDER),
-            BorderFactory.createEmptyBorder(2, 4, 2, 4)));
+        //tf.setBackground(Theme.INPUT);
+        //tf.setForeground(Theme.TEXT);
+        //tf.setCaretColor(Theme.TEXT);
+        //tf.setBorder(BorderFactory.createCompoundBorder(
+        //    BorderFactory.createLineBorder(Theme.BORDER),
+        //    BorderFactory.createEmptyBorder(2, 4, 2, 4)));
         tf.setFont(new Font("Segoe UI", Font.PLAIN, 9));
         return tf;
     }

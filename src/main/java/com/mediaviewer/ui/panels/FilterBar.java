@@ -1,94 +1,84 @@
 package com.mediaviewer.ui.panels;
 
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import com.mediaviewer.model.FilterOptions;
-import com.mediaviewer.util.Theme;
+import com.mediaviewer.ui.components.ThemedCheckBox;
+import com.mediaviewer.ui.components.ThemedComboBox;
+import com.mediaviewer.ui.components.ThemedLabel;
+import com.mediaviewer.ui.components.ThemedPanel;
+import com.mediaviewer.ui.components.ThemedTextField;
+import com.mediaviewer.util.ThemeUtils;
 
 /**
  * Barra de filtros: búsqueda de texto, tipo, ordenación, subcarpetas.
  * Notifica al controlador principal cada vez que cambia algo.
  */
-public class FilterBar extends JPanel {
-
-    private final JTextField        searchField;
-    private final JComboBox<String> typeCombo;
-    private final JComboBox<String> sortCombo;
-    private final JCheckBox         recursiveBox;
-    private final JLabel            countLabel;
-    private final Runnable          onChangedOrder;
+public class FilterBar extends ThemedPanel {
+    //private final ThemedPanel       mainPanel;
+    private final ThemedTextField   searchField;
+    private final ThemedComboBox    typeCombo;
+    private final ThemedComboBox    sortCombo;
+    private final ThemedCheckBox    recursiveBox;
+    private final ThemedLabel       countLabel;
+    private final Runnable          onChanged;
     private final Runnable          onChangedRecursive;
 
-    public FilterBar(Runnable onChangedOrder, Runnable onChangedRecursive) {
-        this.onChangedOrder = onChangedOrder;
+    public FilterBar(Runnable onChanged, Runnable onChangedRecursive) {
+        super(new FlowLayout(FlowLayout.LEFT, 8, 6), ThemeUtils.PanelType.PANEL, BorderFactory.createMatteBorder(0, 0, 1, 0, Color.WHITE));
+        this.onChanged = onChanged;
         this.onChangedRecursive = onChangedRecursive;
-        setBackground(Theme.PANEL);
-        setLayout(new FlowLayout(FlowLayout.LEFT, 8, 6));
-        setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER));
 
         // Icono búsqueda
-        JLabel searchIco = new JLabel("🔍");
-        searchIco.setFont(new Font(Theme.FONT_EMOJI, Font.PLAIN, 14));
-        searchIco.setForeground(Theme.TEXT);
-        add(searchIco);
+        ThemedLabel searchIco = new ThemedLabel("🔍", ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.MED, Font.PLAIN, ThemeUtils.FontType.EMOJI);
+        addToPanel(searchIco);
 
         // Campo de texto
-        searchField = new JTextField(20);
-        searchField.setBackground(Theme.INPUT);
-        searchField.setForeground(Theme.TEXT);
-        searchField.setCaretColor(Theme.TEXT);
-        searchField.setFont(Theme.FONT_SMALL);
-        searchField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Theme.BORDER),
-            BorderFactory.createEmptyBorder(3, 6, 3, 6)));
-        searchField.setToolTipText("Filtrar por nombre (texto parcial)");
+        Border b = BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.WHITE),
+            BorderFactory.createEmptyBorder(3, 6, 3, 6));
+        searchField = new ThemedTextField(20,"Filtrar por nombre (texto parcial)", b);
+        
         searchField.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e)  { onChangedOrder.run(); }
-            public void removeUpdate(DocumentEvent e)  { onChangedOrder.run(); }
-            public void changedUpdate(DocumentEvent e) { onChangedOrder.run(); }
+            @Override public void insertUpdate(DocumentEvent e)  { onChanged.run(); }
+            @Override public void removeUpdate(DocumentEvent e)  { onChanged.run(); }
+            @Override public void changedUpdate(DocumentEvent e) { onChanged.run(); }
         });
-        add(searchField);
+        addToPanel(searchField);
 
         // Tipo
-        add(dimLabel("Tipo:"));
-        typeCombo = darkCombo("Todo", "Imágenes", "GIFs", "Videos");
-        typeCombo.addActionListener(e -> onChangedOrder.run());
-        add(typeCombo);
+        addToPanel(dimLabel("Tipo:"));
+        
+        typeCombo = new ThemedComboBox(ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC,
+                                       "Todo", "Imágenes", "GIFs", "Videos");
+        typeCombo.addActionListener(e -> onChanged.run());
+        addToPanel(typeCombo);
 
         // Ordenación
-        add(dimLabel("Orden:"));
-        sortCombo = darkCombo(
+        addToPanel(dimLabel("Orden:"));
+        sortCombo = new ThemedComboBox(ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.SYMBOL, 
             "Nombre ↑", "Nombre ↓",
             "Fecha ↑",  "Fecha ↓",
             "Tamaño ↑", "Tamaño ↓");
-        sortCombo.addActionListener(e -> onChangedOrder.run());
-        add(sortCombo);
+        sortCombo.addActionListener(e -> onChanged.run());
+        addToPanel(sortCombo);
 
         // Subcarpetas
-        recursiveBox = new JCheckBox("Subcarpetas");
-        recursiveBox.setBackground(Theme.PANEL);
-        recursiveBox.setForeground(Theme.TEXT);
-        recursiveBox.setFont(Theme.FONT_SMALL);
-        recursiveBox.addActionListener(e -> onChangedRecursive.run());
-        add(recursiveBox);
+        recursiveBox = new ThemedCheckBox("Subcarpetas", ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
+        recursiveBox.addActionListener(e -> onChanged.run());
+        addToPanel(recursiveBox);
 
         // Contador (a la derecha)
-        countLabel = new JLabel("—");
-        countLabel.setForeground(Theme.TEXT2);
-        countLabel.setFont(Theme.FONT_SMALL);
-        add(Box.createHorizontalStrut(20));
-        add(countLabel);
+        countLabel = new ThemedLabel("—", ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
+        //addToPanel(Box.createHorizontalStrut(20));
+        //addToPanel(countLabel);
     }
 
     /** 
@@ -113,21 +103,8 @@ public class FilterBar extends JPanel {
     /**
      * @brief Crea una una etiqueta de texto secundario
      */
-    private static JLabel dimLabel(String text) {
-        JLabel l = new JLabel(text);
-        l.setForeground(Theme.TEXT2);
-        l.setFont(Theme.FONT_SMALL);
+    private static ThemedLabel dimLabel(String text) {
+        ThemedLabel l = new ThemedLabel(text, ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
         return l;
-    }
-
-    /**
-     * @brief Crea un menú desplegable
-     */
-    private static JComboBox<String> darkCombo(String... items) {
-        JComboBox<String> cb = new JComboBox<>(items);
-        cb.setBackground(Theme.INPUT);
-        cb.setForeground(Theme.TEXT);
-        cb.setFont(Theme.FONT_SMALL);
-        return cb;
     }
 }

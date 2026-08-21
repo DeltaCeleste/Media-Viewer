@@ -37,4 +37,4 @@ echo " Compilación exitosa!"
 echo " JAR: target/MediaVault-2.0.jar"
 echo ""
 echo " Ejecutando..."
-java --enable-native-access=ALL-UNNAMED -jar target/MediaVault-2.0.jar
+java --enable-native-access=ALL-UNNAMED -jar target/MediaViewer-0.1.0.jar

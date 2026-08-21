@@ -1,6 +1,7 @@
 package com.mediaviewer.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -44,10 +45,15 @@ import com.formdev.flatlaf.extras.FlatInspector;
 import com.mediaviewer.engine.FileScanner;
 import com.mediaviewer.model.FilterOptions;
 import com.mediaviewer.model.MediaFile;
+import com.mediaviewer.ui.components.ThemedButton;
+import com.mediaviewer.ui.components.ThemedLabel;
+import com.mediaviewer.ui.components.ThemedPanel;
 import com.mediaviewer.ui.panels.FilterBar;
 import com.mediaviewer.ui.panels.ThumbnailStrip;
 import com.mediaviewer.ui.panels.ViewerPanel;
 import com.mediaviewer.util.Theme;
+import com.mediaviewer.util.ThemeManager;
+import com.mediaviewer.util.ThemeUtils;
 
 /**
  * Ventana principal de mediaviewer.
@@ -81,21 +87,24 @@ public class MainWindow extends JFrame {
 
     // ── Persistencia ─────────────────────────────────────────────────────────
     private final Preferences prefs = Preferences.userNodeForPackage(MainWindow.class);
+    private final static String THEME_PREF_KEY = "theme";
+    private final static String DIR_PREF_KEY   = "lastDir";
 
     // ── Paneles ───────────────────────────────────────────────────────────────
     private ViewerPanel viewer;
     private ThumbnailStrip thumbStrip;
-    // private FileListPanel fileList;
-    // private MetadataPanel metaPanel;
-    private FilterBar filterBar;
-    private JLabel dirLabel;
-    private JLabel scanLabel;
-    private JLabel posLabel;
-    private JLabel viewerStatus;
-    private JLabel selectStatus;
+    //private FileListPanel  fileList;
+    //private MetadataPanel  metaPanel;
+    private FilterBar      filterBar;
+    private ThemedLabel    dirLabel;
+    private ThemedLabel    scanLabel;
+    private ThemedLabel    posLabel;
+    private ThemedLabel    viewerStatus;
+    private ThemedLabel    selectStatus;
 
     // ── Control ─────────────────────────────────────────────────────────────
     private final AtomicInteger scanLabelInteger = new AtomicInteger(0);
+
 
     public MainWindow() {
         super("Meδia Viewer");
@@ -103,11 +112,21 @@ public class MainWindow extends JFrame {
         setSize(1420, 900);
         setMinimumSize(new Dimension(960, 660));
         setLocationRelativeTo(null);
-        setBackground(Theme.BG);
+
+        ThemeManager themeManager = ThemeManager.getInstance();
+        String themeName = prefs.get(THEME_PREF_KEY, Theme.LIGHT.name());
+        try {
+            ThemeManager.setTheme(Theme.valueOf(themeName));
+        } catch (IllegalArgumentException e) {
+            ThemeManager.setTheme(Theme.LIGHT);
+        }
+        //changeTheme();
+        System.out.println(ThemeManager.getInstance().getCurrentTheme().getThemeName());
 
         FlatInspector.install("ctrl shift alt F");
-        applyLookAndFeel();
+        applyLookAndFeel(ThemeManager.getInstance().getCurrentTheme());
         buildUI();
+
         bindKeys();
         addWindowListener(new WindowAdapter() {
             @Override
@@ -117,12 +136,15 @@ public class MainWindow extends JFrame {
         });
 
         // Restaurar última carpeta
-        String lastDir = prefs.get("lastDir", "");
+        String lastDir = prefs.get(DIR_PREF_KEY, "");
         if (!lastDir.isEmpty()) {
             File f = new File(lastDir);
             if (f.isDirectory())
                 SwingUtilities.invokeLater(() -> loadDirectory(f));
         }
+
+        // Registrar frame como listener
+        ThemeManager.getInstance().addListener(this::applyThemeToFrame);
     }
 
     // ── utilidades ────────────────────────────────────────────────────────────
@@ -155,31 +177,25 @@ public class MainWindow extends JFrame {
     /**
      * @brief Construye la Interfaz gráfica a partir de los paneles
      */
-    private void buildUI() {
+    private void buildUI() {  
         // ── Barra superior ──
-        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 7));
-        topBar.setBackground(Theme.PANEL);
+        ThemedPanel topBar = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 10, 7));
 
-        JLabel logo = new JLabel("Meδia Viewer");
-        logo.setForeground(Theme.TEXT);
-        logo.setFont(Theme.FONT_MED_BOLD);
-        topBar.add(logo);
+        ThemedLabel logo = new ThemedLabel("Meδia Viewer", ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.MED, Font.BOLD, ThemeUtils.FontType.SYMBOL);
+        topBar.addToPanel(logo);
 
-        JButton openBtn = highlightButton("Abrir carpeta");
-        openBtn.addActionListener(evt -> chooseDirectory());
-        topBar.add(openBtn);
+        ThemedButton openBtn = new ThemedButton("Abrir carpeta 📂", ThemeUtils.TextType.TERTIARY, ThemeUtils.FontSize.SMALL, Font.BOLD, ThemeUtils.FontType.EMOJI, ThemeUtils.ButtonType.HIGHLIGHT);
+        openBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        openBtn.getButton().addActionListener(evt -> chooseDirectory());
+        topBar.addToPanel(openBtn);
 
-        dirLabel = new JLabel("Sin carpeta — Ctrl+O para abrir");
-        dirLabel.setForeground(Theme.TEXT2);
-        dirLabel.setFont(Theme.FONT_SMALL);
-        topBar.add(dirLabel);
+        dirLabel = new ThemedLabel("Sin carpeta — Ctrl+O para abrir", ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
+        topBar.addToPanel(dirLabel);
 
-        scanLabel = new JLabel("");
-        scanLabel.setForeground(Theme.SUCCESS);
-        scanLabel.setFont(Theme.FONT_SMALL);
+        scanLabel = new ThemedLabel("", ThemeUtils.TextType.SUCCESS, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
         // empujar a la derecha
-        topBar.add(Box.createHorizontalStrut(30));
-        topBar.add(scanLabel);
+        topBar.addToPanel(Box.createHorizontalStrut(30));
+        topBar.addToPanel(scanLabel);
 
         add(topBar, BorderLayout.NORTH);
 
@@ -189,9 +205,7 @@ public class MainWindow extends JFrame {
 
         // ── Panel principal (split) ──
         viewer = new ViewerPanel();
-        viewerStatus = new JLabel("Selecciona una carpeta para empezar");
-        viewerStatus.setForeground(Theme.TEXT2);
-        viewerStatus.setFont(Theme.FONT_SMALL);
+        viewerStatus = new ThemedLabel("Selecciona una carpeta para empezar", ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
         viewer.setStatusLabel(viewerStatus);
 
         /*
@@ -215,11 +229,10 @@ public class MainWindow extends JFrame {
          */
 
         // Layout con filtros arriba y split en centro
-        JPanel body = new JPanel(new BorderLayout());
-        body.setBackground(Theme.BG);
-        body.add(filterBar, BorderLayout.NORTH);
-        // body.add(mainSplit, BorderLayout.CENTER);
-        body.add(buildCenterPanel(), BorderLayout.CENTER);
+        ThemedPanel body = new ThemedPanel(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND);
+        body.addToPanel(filterBar, BorderLayout.NORTH);
+        //body.add(mainSplit, BorderLayout.CENTER);
+        body.addToPanel(buildCenterPanel(), BorderLayout.CENTER);
         add(body, BorderLayout.CENTER);
 
         // ── Barra inferior (navegación) ──
@@ -234,45 +247,39 @@ public class MainWindow extends JFrame {
      *        imagen
      * @return El panel construido
      */
-    private JPanel buildCenterPanel() {
+    private ThemedPanel buildCenterPanel() {
         thumbStrip = new ThumbnailStrip(this::selectByIndex);
+        thumbStrip.setName("ThumbStrip");
 
-        JPanel center = new JPanel(new BorderLayout());
-        center.setBackground(Theme.BG);
-        center.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER));
+        ThemedPanel center = new ThemedPanel(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND, BorderFactory.createMatteBorder(1, 0, 0, 0, Color.WHITE));
 
         // Status bar del visor (debajo del canvas)
-        JPanel viewerBar = new JPanel(new GridLayout());
-        viewerBar.setBackground(Theme.PANEL);
-
+        ThemedPanel viewerBar = new ThemedPanel(new GridLayout());
+        
         // Botones zoom
-        JPanel zoomButtons = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 3));
-        for (String[] b : new String[][] { { "−", "zoom−" }, { "⟳", "reset" }, { "+", "zoom+" }, { "↗", "open" } }) {
-            JButton btn = new JButton(b[0]);
-            btn.setBackground(Theme.ACCENT);
-            btn.setForeground(Theme.TEXT);
+        ThemedPanel zoomButtons = new ThemedPanel(new FlowLayout(FlowLayout.CENTER, 8, 3));
+        for (String[] b : new String[][]{{"−","zoom−"},{"⟳","reset"},{"+","zoom+"},{"↗","open"}}) {
+            ThemedButton btn = new ThemedButton(b[0], ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.MED, Font.BOLD, ThemeUtils.FontType.SYMBOL, ThemeUtils.ButtonType.ACCENT);
             btn.setBorderPainted(false);
             btn.setFocusPainted(false);
             btn.setOpaque(true);
-            btn.setFont(Theme.FONT_MED_BOLD);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.addActionListener(evt -> handleViewerAction(b[1]));
-            zoomButtons.add(btn);
-        }
+            btn.getButton().addActionListener(evt -> handleViewerAction(b[1]));
+            zoomButtons.addToPanel(btn);
+        }        
 
-        selectStatus = new JLabel(selected.size() + " archivos seleccionados");
-        selectStatus.setForeground(Theme.TEXT2);
-        selectStatus.setFont(Theme.FONT_SMALL);
+        selectStatus = new ThemedLabel(selected.size() + " archivos seleccionados", ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
 
-        viewerBar.add(viewerStatus);
-        viewerBar.add(zoomButtons);
-        //viewerBar.add(Box.createHorizontalStrut(viewerStatus.getWidth()));
-        viewerBar.add(selectStatus);
-        viewerBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER));
+        viewerBar.addToPanel(viewerStatus);
+        viewerBar.addToPanel(zoomButtons); 
+        viewerBar.addToPanel(Box.createHorizontalStrut(viewerStatus.getWidth()));
+        viewerBar.addToPanel(selectStatus);
+        viewerBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.WHITE));
 
-        center.add(viewer, BorderLayout.CENTER);
-        center.add(viewerBar, BorderLayout.SOUTH);
-        center.add(thumbStrip, BorderLayout.NORTH);
+        center.addToPanel(viewer,    BorderLayout.CENTER);
+        center.addToPanel(viewerBar, BorderLayout.SOUTH);
+        center.addToPanel(thumbStrip, BorderLayout.NORTH);
+
         return center;
     }
 
@@ -280,49 +287,45 @@ public class MainWindow extends JFrame {
      * @brief Construye la barra de navegación con los botones pertinentes
      * @return El panel construido
      */
-    private JPanel buildNavBar() {
-        JPanel nav = new JPanel(new GridLayout());
-        nav.setBackground(Theme.PANEL);
-        nav.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER));
-
-        // nav.setLayout(new BorderLayout());
+    private ThemedPanel buildNavBar() {
+        ThemedPanel nav = new ThemedPanel(new GridLayout());
+        nav.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.WHITE));
 
         // Botones centrales
-        JPanel center = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
-        center.setBackground(Theme.PANEL);
-        for (String[] b : new String[][] { { "⏮", "first" }, { "◀", "prev" }, { "▶", "next" }, { "⏭", "last" } }) {
-            JButton btn = new JButton(b[0]);
-            styleBtn(btn);
-            btn.addActionListener(evt -> handleNav(b[1]));
-            center.add(btn);
+        ThemedPanel center = new ThemedPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+        for (String[] b : new String[][]{{"⏮","first"},{"◀","prev"},{"▶","next"},{"⏭","last"}}) {
+            ThemedButton btn = new ThemedButton(b[0], ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.MED, Font.BOLD, ThemeUtils.FontType.SYMBOL, ThemeUtils.ButtonType.ACCENT);
+            btn.setBorderPainted(false);
+            btn.setFocusPainted(false);
+            btn.setOpaque(true);
+            btn.setPreferredSize(new Dimension(44, 32));
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.getButton().addActionListener(evt -> handleNav(b[1]));
+            center.addToPanel(btn);
         }
 
+
         // Botones Izquierdos
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
-        left.setBackground(Theme.PANEL);
-        left.add(Box.createHorizontalStrut(10));
-        posLabel = new JLabel("—");
-        posLabel.setForeground(Theme.TEXT2);
-        posLabel.setFont(Theme.FONT_SMALL);
-        left.add(posLabel);
+        ThemedPanel left = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
+        left.addToPanel(Box.createHorizontalStrut(10));
+        posLabel = new ThemedLabel("—", ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
+        left.addToPanel(posLabel);
 
         // Botones derechos
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 6));
-        right.setBackground(Theme.PANEL);
+        ThemedPanel right = new ThemedPanel(new FlowLayout(FlowLayout.RIGHT, 6, 6));
         right.setOpaque(false);
 
-        JButton refresh = ghostButton("↺  Refrescar  F5");
-        refresh.addActionListener(evt -> startScan());
-        right.add(refresh);
+        ThemedButton refresh = ghostButton("↺  Refrescar  F5", ThemeUtils.TextType.PRIMARY);
+        refresh.getButton().addActionListener(evt -> startScan());
+        right.addToPanel(refresh);
 
-        JButton delete = ghostButton("🗑  Eliminar  Del");
-        delete.setForeground(Theme.HL);
-        delete.addActionListener(evt -> deleteCurrentFile());
-        right.add(delete);
+        ThemedButton delete = ghostButton("🗑  Eliminar  Del", ThemeUtils.TextType.ERROR);
+        delete.getButton().addActionListener(evt -> deleteCurrentFile());
+        right.addToPanel(delete);
 
-        nav.add(left);
-        nav.add(center);
-        nav.add(right);
+        nav.addToPanel(left);
+        nav.addToPanel(center);
+        nav.addToPanel(right);
         return nav;
     }
 
@@ -568,7 +571,7 @@ public class MainWindow extends JFrame {
      */
     private void loadDirectory(File dir) {
         currentDir = dir;
-        prefs.put("lastDir", dir.getAbsolutePath());
+        prefs.put(DIR_PREF_KEY, dir.getAbsolutePath());
         String shortPath = dir.getAbsolutePath();
         if (shortPath.length() > 65)
             shortPath = "…" + shortPath.substring(shortPath.length() - 62);
@@ -744,16 +747,13 @@ public class MainWindow extends JFrame {
         }
     }
 
-    /*
-     * private void onSaved(MediaFile mf) {
-     * // Recargar lista en caso de renombre
-     * fileList.populate(filtered);
-     * fileList.highlight(currentIdx);
-     * if (currentIdx >= 0 && currentIdx < filtered.size())
-     * posLabel.setText((currentIdx+1) + " / " + filtered.size() + "   " +
-     * mf.getName());
-     * }
-     */
+    private void onSaved(MediaFile mf) {
+        // Recargar lista en caso de renombre
+        //fileList.populate(filtered);
+        //fileList.highlight(currentIdx);
+        if (currentIdx >= 0 && currentIdx < filtered.size())
+            posLabel.setText((currentIdx+1) + " / " + filtered.size() + "   " + mf.getName());
+    }
 
     /**
      * @brief borra todo filtered menos la seleccion actual
@@ -856,42 +856,11 @@ public class MainWindow extends JFrame {
 
     // ── Helpers de estilo ─────────────────────────────────────────────────────
     /**
-     * @brief Aplica un estilo predefinido (Estilo de navegación) a un botón
-     * @param b el botón
-     */
-    private void styleBtn(JButton b) {
-        b.setBackground(Theme.ACCENT);
-        b.setForeground(Theme.TEXT);
-        b.setFont(Theme.FONT_MED_BOLD);
-        b.setBorderPainted(false);
-        b.setFocusPainted(false);
-        b.setOpaque(true);
-        b.setPreferredSize(new Dimension(44, 32));
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    }
-
-    /**
-     * @brief Crea un botón de acento
-     * @param text El texto del botón
-     */
-    private static JButton highlightButton(String text) {
-        JButton b = new JButton(text);
-        b.setBackground(Theme.HL);
-        b.setForeground(Theme.TEXT3);
-        b.setFont(Theme.FONT_SMALL_BOLD);
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return b;
-    }
-
-    /**
      * @brief Crea un botón transparente
      * @param text El texto del botón
      */
-    private static JButton ghostButton(String text) {
-        JButton b = new JButton(text);
-        b.setBackground(Theme.PANEL);
-        b.setForeground(Theme.TEXT2);
-        b.setFont(new Font(Theme.FONT_SYMBOL, Font.PLAIN, 10));
+    private static ThemedButton ghostButton(String text, ThemeUtils.TextType type) {
+        ThemedButton b = new ThemedButton(text, type, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.SYMBOL, ThemeUtils.ButtonType.PANEL);
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setOpaque(true);
@@ -902,8 +871,9 @@ public class MainWindow extends JFrame {
     // ── Look & Feel ───────────────────────────────────────────────────────────
     /**
      * @brief Aplica los estilos propios de Theme al UIManager
+     * @param theme el tema del que coger los colores
      */
-    private static void applyLookAndFeel() {
+    private static void applyLookAndFeel(Theme theme) {
         try {
             // Intentar cargar FlatLaf (Dark o Light) por reflexión o directamente
             boolean loaded = false;
@@ -931,44 +901,58 @@ public class MainWindow extends JFrame {
             }
 
             // Colores globales (SE APLICAN DESPUÉS DE ESTABLECER EL LOOK AND FEEL)
-            UIManager.put("Panel.background", Theme.PANEL);
-            UIManager.put("ScrollBar.background", Theme.ACCENT);
-            UIManager.put("ScrollBar.thumb", Theme.HL);
-
+            UIManager.put("Panel.background",            theme.getBackground());
+            UIManager.put("ScrollBar.background",        theme.getAccent());
+            UIManager.put("ScrollBar.thumb",             theme.getHighLight());
+            
             // Claves globales para ComboBox
-            UIManager.put("ComboBox.background", Theme.INPUT);
-            UIManager.put("ComboBox.foreground", Theme.TEXT);
-            UIManager.put("ComboBox.popupBackground", Theme.PANEL);
-            UIManager.put("ComboBox.focusedBackground", Theme.HL2);
-            UIManager.put("ComboBox.selectionBackground", Theme.HL2);
-            UIManager.put("ComboBox.selectionForeground", Theme.TEXT);
+            UIManager.put("ComboBox.background",          theme.getInput());
+            UIManager.put("ComboBox.foreground",          theme.getText1());
+            UIManager.put("ComboBox.popupBackground",     theme.getBackground());
+            UIManager.put("ComboBox.focusedBackground",   theme.getHighLight2());
+            UIManager.put("ComboBox.selectionBackground", theme.getHighLight2());
+            UIManager.put("ComboBox.selectionForeground", theme.getText1());
             // Color de selección en la lista desplegable (por si usa el componente List)
-            UIManager.put("List.selectionBackground", Theme.HL2);
-            UIManager.put("List.selectionForeground", Theme.TEXT);
-            UIManager.put("Component.focusColor", Theme.ACCENT);
+            UIManager.put("List.selectionBackground",     theme.getHighLight2());
+            UIManager.put("List.selectionForeground",     theme.getText1());
+            UIManager.put("Component.focusColor",         theme.getAccent());
 
             // Claves para las checkboxes
-            UIManager.put("CheckBox.icon.borderColor", Theme.BORDER);
-            UIManager.put("CheckBox.icon.background", Theme.INPUT);
-            UIManager.put("CheckBox.icon.selectedBackground", Theme.INPUT);
-            UIManager.put("CheckBox.icon.checkmarkColor", Theme.HL2);
+            UIManager.put("CheckBox.icon.borderColor",        theme.getBorder());
+            UIManager.put("CheckBox.icon.background",         theme.getInput());
+            UIManager.put("CheckBox.icon.selectedBackground", theme.getInput());
+            UIManager.put("CheckBox.icon.checkmarkColor",     theme.getHighLight2());
 
             // Claves globales para Botones
             UIManager.put("Button.arc", 0);
-            UIManager.put("Button.background", Theme.ACCENT);
-            UIManager.put("Button.foreground", Theme.TEXT);
-
+            UIManager.put("Button.background", theme.getAccent());
+            UIManager.put("Button.foreground", theme.getText1());
+            
             // Claves para paneles auxiliares
-            UIManager.put("OptionPane.background", Theme.PANEL);
-            UIManager.put("OptionPane.messageForeground", Theme.TEXT);
+            UIManager.put("OptionPane.background",       theme.getBackground());
+            UIManager.put("OptionPane.messageForeground",theme.getText1());
 
-            // Claves para Sliders
-            UIManager.put("Slider.trackColor", Theme.ACCENT);
-            UIManager.put("Slider.trackValueColor", Theme.HL);
-            UIManager.put("Slider.thumbColor", Theme.HL);
-            UIManager.put("Slider.hoverThumbColor", Theme.HL2);
+            //Claves para Sliders
+            UIManager.put("Slider.trackColor",       theme.getAccent());
+            UIManager.put("Slider.trackValueColor",  theme.getHighLight());
+            UIManager.put("Slider.thumbColor",       theme.getHighLight());
+            UIManager.put("Slider.hoverThumbColor",  theme.getHighLight2());
 
         } catch (Exception ignored) {
         }
+    }
+
+    private void applyThemeToFrame(Theme theme) {
+        applyLookAndFeel(theme);
+        setBackground(theme.getBackground());
+    }
+
+    private void applyThemeToFrame() {
+        applyThemeToFrame(ThemeManager.getInstance().getCurrentTheme());
+    }
+
+    private void changeTheme(){
+        ThemeManager.getInstance().toggleLightDark();
+        prefs.put(THEME_PREF_KEY, ThemeManager.getInstance().getCurrentTheme().getThemeName());
     }
 }

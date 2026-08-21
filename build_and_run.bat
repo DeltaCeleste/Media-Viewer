@@ -48,5 +48,5 @@ echo  Compilacion exitosa!
 echo  JAR generado en: target\MediaViewer-2.0.jar
 echo.
 echo  Ejecutando la aplicacion...
-java --enable-native-access=ALL-UNNAMED -jar target\MediaViewer-2.0.jar
+java --enable-native-access=ALL-UNNAMED -jar target\MediaViewer-0.1.0.jar
 
