@@ -28,11 +28,13 @@ public class FilterBar extends ThemedPanel {
     private final ThemedComboBox    sortCombo;
     private final ThemedCheckBox    recursiveBox;
     private final ThemedLabel       countLabel;
-    private final Runnable     onChanged;
+    private final Runnable          onChanged;
+    private final Runnable          onChangedRecursive;
 
-    public FilterBar(Runnable onChanged) {
+    public FilterBar(Runnable onChanged, Runnable onChangedRecursive) {
         super(new FlowLayout(FlowLayout.LEFT, 8, 6), ThemeUtils.PanelType.PANEL, BorderFactory.createMatteBorder(0, 0, 1, 0, Color.WHITE));
         this.onChanged = onChanged;
+        this.onChangedRecursive = onChangedRecursive;
 
         // Icono búsqueda
         ThemedLabel searchIco = new ThemedLabel("🔍", ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.MED, Font.PLAIN, ThemeUtils.FontType.EMOJI);

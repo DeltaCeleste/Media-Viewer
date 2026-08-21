@@ -16,18 +16,25 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
+import com.ibm.icu.text.Collator;
+import com.ibm.icu.util.ULocale;
+
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -52,30 +59,31 @@ import com.mediaviewer.util.ThemeUtils;
  * Ventana principal de mediaviewer.
  *
  * Reglas de threading:
- *  ┌────────────────────────────────────────────────────────┐
- *  │ EDT (Event Dispatch Thread)                            │
- *  │   • Todo lo que actualiza widgets                      │
- *  │   • Filtrado/ordenación (rápido, en memoria)           │
- *  │   • Recibe callbacks de workers vía invokeLater/done() │
- *  ├────────────────────────────────────────────────────────┤
- *  │ SwingWorker / ExecutorService (hilos de fondo)         │
- *  │   • Escaneo de disco (FileScanner)                     │
- *  │   • Carga de imágenes (ViewerPanel)                    │
- *  │   • Miniaturas (ThumbnailStrip)                        │
- *  │   • Lectura de metadatos (MetadataPanel)               │
- *  └────────────────────────────────────────────────────────┘
+ * ┌────────────────────────────────────────────────────────┐
+ * │ EDT (Event Dispatch Thread) │
+ * │ • Todo lo que actualiza widgets │
+ * │ • Filtrado/ordenación (rápido, en memoria) │
+ * │ • Recibe callbacks de workers vía invokeLater/done() │
+ * ├────────────────────────────────────────────────────────┤
+ * │ SwingWorker / ExecutorService (hilos de fondo) │
+ * │ • Escaneo de disco (FileScanner) │
+ * │ • Carga de imágenes (ViewerPanel) │
+ * │ • Miniaturas (ThumbnailStrip) │
+ * │ • Lectura de metadatos (MetadataPanel) │
+ * └────────────────────────────────────────────────────────┘
  */
 public class MainWindow extends JFrame {
 
     // —— Constantes
-    private final static int    SHOW_SCAN_TIME = 5000;
+    private final static int SHOW_SCAN_TIME = 5000;
 
     // ── Estado ────────────────────────────────────────────────────────────────
-    private List<MediaFile> allFiles      = new ArrayList<>();
-    private List<MediaFile> filtered      = new ArrayList<>();
-    private int             currentIdx    = -1;
-    private File            currentDir    = null;
-    private FileScanner     activeScanner = null;
+    private List<MediaFile> allFiles = new ArrayList<>();
+    private List<MediaFile> filtered = new ArrayList<>();
+    private HashSet<MediaFile> selected = new HashSet<>();
+    private int currentIdx = -1;
+    private File currentDir = null;
+    private FileScanner activeScanner = null;
 
     // ── Persistencia ─────────────────────────────────────────────────────────
     private final Preferences prefs = Preferences.userNodeForPackage(MainWindow.class);
@@ -83,7 +91,7 @@ public class MainWindow extends JFrame {
     private final static String DIR_PREF_KEY   = "lastDir";
 
     // ── Paneles ───────────────────────────────────────────────────────────────
-    private ViewerPanel    viewer;
+    private ViewerPanel viewer;
     private ThumbnailStrip thumbStrip;
     //private FileListPanel  fileList;
     //private MetadataPanel  metaPanel;
@@ -92,6 +100,7 @@ public class MainWindow extends JFrame {
     private ThemedLabel    scanLabel;
     private ThemedLabel    posLabel;
     private ThemedLabel    viewerStatus;
+    private ThemedLabel    selectStatus;
 
     // ── Control ─────────────────────────────────────────────────────────────
     private final AtomicInteger scanLabelInteger = new AtomicInteger(0);
@@ -120,18 +129,48 @@ public class MainWindow extends JFrame {
 
         bindKeys();
         addWindowListener(new WindowAdapter() {
-            @Override public void windowClosing(WindowEvent e) { shutdown(); }
+            @Override
+            public void windowClosing(WindowEvent e) {
+                shutdown();
+            }
         });
 
         // Restaurar última carpeta
         String lastDir = prefs.get(DIR_PREF_KEY, "");
         if (!lastDir.isEmpty()) {
             File f = new File(lastDir);
-            if (f.isDirectory()) SwingUtilities.invokeLater(() -> loadDirectory(f));
+            if (f.isDirectory())
+                SwingUtilities.invokeLater(() -> loadDirectory(f));
         }
 
         // Registrar frame como listener
         ThemeManager.getInstance().addListener(this::applyThemeToFrame);
+    }
+
+    // ── utilidades ────────────────────────────────────────────────────────────
+    /**
+     * @brief Devuelve el archivo actualmente seleccionado por currentIdx
+     * @return el archivo (MediaFile)
+     */
+    private MediaFile getCurrentMediaFile() {
+        return getMediaFileByIdx(currentIdx);
+    }
+
+    /**
+     * @brief Devuelve el file (ruta) al archivo actualmente seleccionado
+     */
+    private File getCurrentFile() {
+        return getCurrentMediaFile().getFile();
+    }
+
+    /**
+     * @brief Devuelve el archivo referenciado en los filtrados por el índice
+     *        provisto
+     * @param idx el índice
+     * @return el archivo referenciado
+     */
+    private MediaFile getMediaFileByIdx(int idx) {
+        return filtered.get(idx);
     }
 
     // ── UI ────────────────────────────────────────────────────────────────────
@@ -161,7 +200,7 @@ public class MainWindow extends JFrame {
         add(topBar, BorderLayout.NORTH);
 
         // ── Barra de filtros ──
-        filterBar = new FilterBar(this::applyFilters);
+        filterBar = new FilterBar(this::applyFilters, this::startScan);
         add(filterBar, BorderLayout.AFTER_LAST_LINE); // provisional, se reordena
 
         // ── Panel principal (split) ──
@@ -169,23 +208,25 @@ public class MainWindow extends JFrame {
         viewerStatus = new ThemedLabel("Selecciona una carpeta para empezar", ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
         viewer.setStatusLabel(viewerStatus);
 
-        /*fileList  = new FileListPanel(this::selectByIndex);
-        metaPanel = new MetadataPanel(this::onSaved);
-
-        JSplitPane leftSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-            fileList, buildCenterPanel());
-        leftSplit.setDividerLocation(210);
-        leftSplit.setDividerSize(5);
-        leftSplit.setBorder(null);
-        leftSplit.setBackground(Theme.BG);
-
-        JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-            leftSplit, metaPanel);
-        mainSplit.setDividerLocation(getWidth() - 300);
-        mainSplit.setDividerSize(5);
-        mainSplit.setBorder(null);
-        mainSplit.setBackground(Theme.BG);
-        mainSplit.setResizeWeight(1.0);*/
+        /*
+         * fileList = new FileListPanel(this::selectByIndex);
+         * metaPanel = new MetadataPanel(this::onSaved);
+         * 
+         * JSplitPane leftSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+         * fileList, buildCenterPanel());
+         * leftSplit.setDividerLocation(210);
+         * leftSplit.setDividerSize(5);
+         * leftSplit.setBorder(null);
+         * leftSplit.setBackground(Theme.BG);
+         * 
+         * JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+         * leftSplit, metaPanel);
+         * mainSplit.setDividerLocation(getWidth() - 300);
+         * mainSplit.setDividerSize(5);
+         * mainSplit.setBorder(null);
+         * mainSplit.setBackground(Theme.BG);
+         * mainSplit.setResizeWeight(1.0);
+         */
 
         // Layout con filtros arriba y split en centro
         ThemedPanel body = new ThemedPanel(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND);
@@ -200,9 +241,10 @@ public class MainWindow extends JFrame {
 
     /**
      * @brief Contruye el panel central compuesto por:
-     * - El vector de thumbnails
-     * - El campo de display para la imagen
-     * - La barra con los botones que permiten hacer zoom y el tamaño de la imagen
+     *        - El vector de thumbnails
+     *        - El campo de display para la imagen
+     *        - La barra con los botones que permiten hacer zoom y el tamaño de la
+     *        imagen
      * @return El panel construido
      */
     private ThemedPanel buildCenterPanel() {
@@ -226,18 +268,22 @@ public class MainWindow extends JFrame {
             zoomButtons.addToPanel(btn);
         }        
 
+        selectStatus = new ThemedLabel(selected.size() + " archivos seleccionados", ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
+
         viewerBar.addToPanel(viewerStatus);
         viewerBar.addToPanel(zoomButtons); 
         viewerBar.addToPanel(Box.createHorizontalStrut(viewerStatus.getWidth()));
+        viewerBar.addToPanel(selectStatus);
         viewerBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.WHITE));
 
         center.addToPanel(viewer,    BorderLayout.CENTER);
         center.addToPanel(viewerBar, BorderLayout.SOUTH);
         center.addToPanel(thumbStrip, BorderLayout.NORTH);
+
         return center;
     }
 
-    /** 
+    /**
      * @brief Construye la barra de navegación con los botones pertinentes
      * @return El panel construido
      */
@@ -285,33 +331,225 @@ public class MainWindow extends JFrame {
 
     // ── Teclas ────────────────────────────────────────────────────────────────
     /**
-     * @brief Establece la lógica de la aplicación a algunas teclas y eventos de teclado para navegación por teclado
+     * @brief Establece la lógica de la aplicación a algunas teclas y eventos de
+     *        teclado para navegación por teclado
      */
     private void bindKeys() {
-        KeyStroke left   = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT,   0);
-        KeyStroke right  = KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT,  0);
-        KeyStroke home   = KeyStroke.getKeyStroke(KeyEvent.VK_HOME,   0);
-        KeyStroke end    = KeyStroke.getKeyStroke(KeyEvent.VK_END,    0);
-        KeyStroke del    = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
-        KeyStroke f5     = KeyStroke.getKeyStroke(KeyEvent.VK_F5,     0);
-        KeyStroke ctrlO  = KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK);
-
         JRootPane rp = getRootPane();
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(left,  "prev");
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(right, "next");
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(home,  "first");
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(end,   "last");
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(del,   "delete");
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(f5,    "refresh");
-        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlO, "open");
 
-        rp.getActionMap().put("prev",    new AbstractAction() { public void actionPerformed(ActionEvent e) { goTo(currentIdx - 1); } });
-        rp.getActionMap().put("next",    new AbstractAction() { public void actionPerformed(ActionEvent e) { goTo(currentIdx + 1); } });
-        rp.getActionMap().put("first",   new AbstractAction() { public void actionPerformed(ActionEvent e) { goTo(0); } });
-        rp.getActionMap().put("last",    new AbstractAction() { public void actionPerformed(ActionEvent e) { goTo(filtered.size() - 1); } });
-        rp.getActionMap().put("delete",  new AbstractAction() { public void actionPerformed(ActionEvent e) { deleteCurrentFile(); } });
-        rp.getActionMap().put("refresh", new AbstractAction() { public void actionPerformed(ActionEvent e) { startScan(); } });
-        rp.getActionMap().put("open",    new AbstractAction() { public void actionPerformed(ActionEvent e) { chooseDirectory(); } });
+        // Movimiento
+        // =====================================================================================================
+        KeyStroke left = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0); // Una a la izquierda
+        KeyStroke right = KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0); // Una a la derecha
+        KeyStroke ctrlleft = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.CTRL_DOWN_MASK); // A la 0
+        KeyStroke ctrlright = KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.CTRL_DOWN_MASK); // A la última
+
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(left, "prev");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(right, "next");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlleft, "first");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlright, "last");
+
+        rp.getActionMap().put("prev",       new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(currentIdx - 1); } });
+        rp.getActionMap().put("next",       new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(currentIdx + 1); } });
+        rp.getActionMap().put("first",      new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(0); } });
+        rp.getActionMap().put("last",       new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(filtered.size() - 1); } });
+
+        // Selección
+        // =======================================================================================================
+        KeyStroke up = KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0); // Añadir o eliminar el archivo actual a la selección
+        KeyStroke ctrlA = KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK); // Seleccionar todo
+
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(up, "select");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlA, "allselect");
+
+        rp.getActionMap().put("select", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                toogleSelect(getCurrentMediaFile());
+            }
+        });
+        rp.getActionMap().put("allselect", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                selectAll();
+            }
+        });
+
+        // Borrado
+        // =========================================================================================================
+        KeyStroke del      = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);                          // Borrar el archivo o selección actual
+        KeyStroke ctrldel  = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.CTRL_DOWN_MASK);  // Borrar todo salvo la selección actual
+        KeyStroke shiftdel = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.SHIFT_DOWN_MASK); // Borrar todo salvo la selección actual hasta el current
+
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(del,      "delete");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrldel,  "inversedelete");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(shiftdel, "inversecappeddelete");
+
+        rp.getActionMap().put("delete", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteCurrentSelection();
+            }
+        });
+
+        rp.getActionMap().put("inversedelete", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteButcurrentSelection(false);
+            }
+        });
+
+        rp.getActionMap().put("inversecappeddelete", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteButcurrentSelection(true);
+            }
+        });
+
+        
+
+        // Otras funciones
+        // =================================================================================================
+        KeyStroke f12 = KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK); // DEBUG:
+                                                                                                                         // funciones
+                                                                                                                         // beta
+                                                                                                                         // para
+                                                                                                                         // pruebas
+                                                                                                                         // seguras
+        KeyStroke f5 = KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0); // Refrescar
+        KeyStroke ctrlO = KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK); // Abrir carpeta
+        KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0); // Abrir el archivo actual externamente
+
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(f12, "test");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(f5, "refresh");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlO, "open");
+        rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(enter, "external");
+
+        rp.getActionMap().put("test", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Nada que probar");
+            }
+        });
+        rp.getActionMap().put("refresh", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                startScan();
+            }
+        });
+        rp.getActionMap().put("open", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                chooseDirectory();
+            }
+        });
+        rp.getActionMap().put("external", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openExternally(getCurrentFile());
+            }
+        });
+
+    }
+
+    // ── Selección ────────────────────────────────────────────────────────────
+    /**
+     * @brief Introduce el índice de un archivo al conjunto seleccionados o lo saca
+     *        si ya estaba seleccionado
+     * @param mf el archivo
+     */
+    private void toogleSelect(MediaFile mf) {
+        if (selected.contains(mf)) {
+            removeSelected(mf);
+        } else {
+            addSelected(mf);
+        }
+        selectStatus.setText(selected.size() + " archivos seleccionados");
+    }
+
+    /**
+     * @brief Introduce el índice de un archivo al grupo de seleccionados
+     * @param mf el archivo a introducir
+     */
+    private void addSelected(MediaFile mf) {
+        if (!selected.contains(mf)) {
+            selected.add(mf);
+
+            int scanGen = scanLabelInteger.incrementAndGet();
+            scanLabel.setText(mf.getName() + " seleccionado");
+            Timer t = new Timer(SHOW_SCAN_TIME, e -> {
+                if (scanLabelInteger.get() == scanGen) {
+                    scanLabel.setText("");
+                }
+            });
+            t.setRepeats(false);
+            t.start();
+            //System.out.println(mf.getName() + " seleccionado");
+        }
+    }
+
+    /**
+     * @brief Retira el índice de un archivo al grupo de seleccionados
+     * @param mf el archivo a eliminar
+     */
+    private void removeSelected(MediaFile mf) {
+        if (selected.contains(mf)) {
+            selected.remove(mf);
+
+            int scanGen = scanLabelInteger.incrementAndGet();
+            scanLabel.setText(mf.getName() + " deseleccionado");
+            Timer t = new Timer(SHOW_SCAN_TIME, e -> {
+                if (scanLabelInteger.get() == scanGen) {
+                    scanLabel.setText("");
+                }
+            });
+            t.setRepeats(false);
+            t.start();
+            //System.out.println(mf.getName() + " deseleccionado");
+        }
+    }
+
+    /**
+     * @brief vacía el conjunto de seleccionados
+     */
+    private void clearSelected() {
+        selected.clear();
+    }
+
+    /**
+     * @brief encuentra el índice del archivo más cercano (hacia atrás en filtered)
+     *        que no este seleccionado y ajusta este indice simulando un delete
+     * @return dicho indice
+     */
+    private int findClosestIdx() {
+        if (selected.size() == filtered.size())
+            return -1; // Estamos ante una selección total
+        int idx = currentIdx;
+        int candidato = -1;
+        int anteriores = 0;
+        while (idx >= 0) {
+            if (!selected.contains(getMediaFileByIdx(idx)) && candidato == -1) {
+                candidato = idx;
+            } else {
+                if (candidato != -1 && selected.contains(getMediaFileByIdx(idx))) {
+                    anteriores++;
+                }
+            }
+            idx--;
+
+        }
+        System.err.println(candidato - anteriores);
+        if (candidato == -1)
+            return 0;
+        else
+            return candidato - anteriores;
+    }
+
+    /**
+     * @brief selecciona todas las imagenes del filtered actual
+     */
+    private void selectAll() {
+        selected.addAll(filtered);
     }
 
     // ── Directorio ────────────────────────────────────────────────────────────
@@ -320,7 +558,7 @@ public class MainWindow extends JFrame {
      */
     private void chooseDirectory() {
         JFileChooser fc = new JFileChooser(
-            currentDir != null ? currentDir : new File(System.getProperty("user.home")));
+                currentDir != null ? currentDir : new File(System.getProperty("user.home")));
         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         fc.setDialogTitle("Seleccionar carpeta de medios");
         if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION)
@@ -335,18 +573,22 @@ public class MainWindow extends JFrame {
         currentDir = dir;
         prefs.put(DIR_PREF_KEY, dir.getAbsolutePath());
         String shortPath = dir.getAbsolutePath();
-        if (shortPath.length() > 65) shortPath = "…" + shortPath.substring(shortPath.length() - 62);
-        dirLabel.setText(shortPath); //Etiqueta de la topBar
+        if (shortPath.length() > 65)
+            shortPath = "…" + shortPath.substring(shortPath.length() - 62);
+        dirLabel.setText(shortPath); // Etiqueta de la topBar
         startScan();
     }
 
     // ── Escaneo (en SwingWorker — nunca bloquea EDT) ──────────────────────────
     /**
-     * @brief Comienza un escaneo en el directorio actualmente seleccionado y carga los componentes correspondientes con el resultado
+     * @brief Comienza un escaneo en el directorio actualmente seleccionado y carga
+     *        los componentes correspondientes con el resultado
      */
     private void startScan() {
-        if (currentDir == null) return;
-        if (activeScanner != null) activeScanner.stop();
+        if (currentDir == null)
+            return;
+        if (activeScanner != null)
+            activeScanner.stop();
 
         FilterOptions opts = filterBar.get();
         scanLabel.setText("Escaneando…");
@@ -355,21 +597,22 @@ public class MainWindow extends JFrame {
         int scanGen = scanLabelInteger.get();
 
         activeScanner = new FileScanner(
-            currentDir,
-            opts.typeFilter(),
-            opts.recursive(),
-            files -> {                       // onDone — ya en EDT via done()
-                allFiles = files;
-                scanLabel.setText(files.size() + " archivos encontrados");
-                Timer t = new Timer(SHOW_SCAN_TIME, e -> {
-                    if(scanLabelInteger.get() == scanGen){
-                        scanLabel.setText("");   
-                    }
-            });
-                t.setRepeats(false); t.start();
-                applyFilters();
-            },
-            msg -> scanLabel.setText(msg)    // onProgress — ya en EDT via process()
+                currentDir,
+                opts.typeFilter(),
+                opts.recursive(),
+                files -> { // onDone — ya en EDT via done()
+                    allFiles = files;
+                    scanLabel.setText(files.size() + " archivos encontrados");
+                    Timer t = new Timer(SHOW_SCAN_TIME, e -> {
+                        if (scanLabelInteger.get() == scanGen) {
+                            scanLabel.setText("");
+                        }
+                    });
+                    t.setRepeats(false);
+                    t.start();
+                    applyFilters();
+                },
+                msg -> scanLabel.setText(msg) // onProgress — ya en EDT via process()
         );
         activeScanner.execute();
     }
@@ -381,50 +624,55 @@ public class MainWindow extends JFrame {
      * @param idx el indice de dicho archivo
      */
     private void applyFilters(int idx) {
+        clearSelected(); // limpiamos los seleccionados pues filtered puede cambiar.
         FilterOptions opts = filterBar.get();
         List<MediaFile> items = new ArrayList<>(allFiles);
 
         // Filtro de tipo
         items = switch (opts.typeFilter()) {
             case "Imágenes" -> items.stream()
-                .filter(m -> m.getType() == MediaFile.MediaType.IMAGE)
-                .collect(Collectors.toList());
-            case "GIFs"    -> items.stream()
-                .filter(m -> m.getType() == MediaFile.MediaType.GIF)
-                .collect(Collectors.toList());
-            case "Videos"  -> items.stream()
-                .filter(m -> m.getType() == MediaFile.MediaType.VIDEO)
-                .collect(Collectors.toList());
-            default        -> items;
+                    .filter(m -> m.getType() == MediaFile.MediaType.IMAGE)
+                    .collect(Collectors.toList());
+            case "GIFs" -> items.stream()
+                    .filter(m -> m.getType() == MediaFile.MediaType.GIF)
+                    .collect(Collectors.toList());
+            case "Videos" -> items.stream()
+                    .filter(m -> m.getType() == MediaFile.MediaType.VIDEO)
+                    .collect(Collectors.toList());
+            default -> items;
         };
 
         // Filtro de búsqueda
         if (!opts.searchText().isEmpty()) {
             String q = opts.searchText();
             items = items.stream()
-                .filter(m -> m.getName().toLowerCase().contains(q))
-                .collect(Collectors.toList());
+                    .filter(m -> m.getName().toLowerCase().contains(q))
+                    .collect(Collectors.toList());
         }
 
         // Ordenación
+        ULocale locale = new ULocale(ULocale.getDefault().getName() + "@colNumeric=yes");
+        Collator collator = Collator.getInstance(locale);
+        Comparator<String> naturalOrder = (s1, s2) -> collator.compare(s1, s2);
         Comparator<MediaFile> cmp = switch (opts.sortKey()) {
-            case "Nombre ↓"  -> Comparator.comparing(MediaFile::getName,
-                                    String.CASE_INSENSITIVE_ORDER).reversed();
-            case "Fecha ↑"   -> Comparator.comparingLong(MediaFile::getLastModified);
-            case "Fecha ↓"   -> Comparator.comparingLong(MediaFile::getLastModified).reversed();
-            case "Tamaño ↑"  -> Comparator.comparingLong(MediaFile::getSize);
-            case "Tamaño ↓"  -> Comparator.comparingLong(MediaFile::getSize).reversed();
-            default          -> Comparator.comparing(MediaFile::getName,
-                                    String.CASE_INSENSITIVE_ORDER);
+            case "Nombre ↓" -> Comparator.comparing(MediaFile::getName,
+                    naturalOrder).reversed();
+            case "Fecha ↑" -> Comparator.comparingLong(MediaFile::getLastModified);
+            case "Fecha ↓" -> Comparator.comparingLong(MediaFile::getLastModified).reversed();
+            case "Tamaño ↑" -> Comparator.comparingLong(MediaFile::getSize);
+            case "Tamaño ↓" -> Comparator.comparingLong(MediaFile::getSize).reversed();
+            default -> Comparator.comparing(MediaFile::getName,
+                    naturalOrder);
         };
         items.sort(cmp);
 
         filtered = items;
         filterBar.setCount(filtered.size(), allFiles.size());
-        //fileList.populate(filtered);
+        // fileList.populate(filtered);
         thumbStrip.populate(filtered, idx);
 
-        if (!filtered.isEmpty()) selectByIndex(idx);
+        if (!filtered.isEmpty())
+            selectByIndex(idx);
         else {
             currentIdx = -1;
             viewer.clear();
@@ -440,28 +688,34 @@ public class MainWindow extends JFrame {
         applyFilters(0);
     }
 
-    // ── Selección / Navegación ────────────────────────────────────────────────
+    // ── Selección (aplicación) / Navegación
+    // ────────────────────────────────────────────────
     /**
-     * @brief selecciona un archivo por su indice en el vector de filtrados y actualiza la vista con este elemento
+     * @brief selecciona un archivo por su indice en el vector de filtrados y
+     *        actualiza la vista con este elemento
      */
     public void selectByIndex(int idx) {
-        if (filtered.isEmpty()) return;
+        if (filtered.isEmpty())
+            return;
 
         idx = Math.max(0, Math.min(idx, filtered.size() - 1));
-        int prevIdx = currentIdx; // Si venimos de currentIdx = -1, el viewer panel debería estar vacío 
+        int prevIdx = currentIdx; // Si venimos de currentIdx = -1, el viewer panel debería estar vacío
         currentIdx = idx;
-        MediaFile mf = filtered.get(idx);
+        MediaFile mf = getCurrentMediaFile();
 
-        if (mf == viewer.getCurrent() && prevIdx != -1) return;
+        if (mf == viewer.getCurrent() && prevIdx != -1)
+            return;
 
         viewer.load(mf);
-        //metaPanel.load(mf);
-        //fileList.highlight(idx);
+        // metaPanel.load(mf);
+        // fileList.highlight(idx);
         thumbStrip.highlight(idx);
         posLabel.setText((idx + 1) + " / " + filtered.size() + "   " + mf.getName());
     }
 
-    private void goTo(int idx) { selectByIndex(idx); }
+    private void goTo(int idx) {
+        selectByIndex(idx);
+    }
 
     // ── Acciones ──────────────────────────────────────────────────────────────
     /**
@@ -470,10 +724,10 @@ public class MainWindow extends JFrame {
      */
     private void handleNav(String cmd) {
         switch (cmd) {
-            case "prev"  -> goTo(currentIdx - 1);
-            case "next"  -> goTo(currentIdx + 1);
+            case "prev" -> goTo(currentIdx - 1);
+            case "next" -> goTo(currentIdx + 1);
             case "first" -> goTo(0);
-            case "last"  -> goTo(filtered.size() - 1);
+            case "last" -> goTo(filtered.size() - 1);
         }
     }
 
@@ -486,7 +740,10 @@ public class MainWindow extends JFrame {
             case "zoom−" -> viewer.zoomOut();
             case "zoom+" -> viewer.zoomIn();
             case "reset" -> viewer.resetView();
-            case "open"  -> { if (currentIdx >= 0) openExternally(filtered.get(currentIdx).getFile()); }
+            case "open" -> {
+                if (currentIdx >= 0)
+                    openExternally(getCurrentFile());
+            }
         }
     }
 
@@ -499,23 +756,76 @@ public class MainWindow extends JFrame {
     }
 
     /**
-     * @brief Pide confirmación para eliminar la imagen seleccionada actualmente (por índice) y de ser afirmativa
+     * @brief borra todo filtered menos la seleccion actual
+     * @param upToCurrent si true, solo borra hasta el archivo marcado por currentIdx
+     */
+    private void deleteButcurrentSelection(boolean upToCurrent) {
+        HashSet<MediaFile> save = new HashSet<>(selected);
+        clearSelected();
+        selected.addAll(filtered);
+        if(upToCurrent) selected.removeAll(filtered.subList(currentIdx+1, filtered.size()));
+        selected.removeAll(save);
+        if (!deleteCurrentSelection()) {
+            clearSelected();
+            selected.addAll(save);
+        }
+    }
+
+    /**
+     * @brief borra la selección actual, o si no hay seleccionadas, la imagen actual
+     */
+    private boolean deleteCurrentSelection() {
+        if (selected.isEmpty()) {
+            return deleteCurrentFile();
+        } else {
+            int choice = JOptionPane.showConfirmDialog(this,
+                    "¿Eliminar permanentemente los " + selected.size() + " elementos seleccionados?\n",
+                    "Eliminar seleccion de archivos", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (choice != JOptionPane.YES_OPTION)
+                return false;
+            ;
+            int errores = 0;
+            int newidx = findClosestIdx();
+
+            for (MediaFile mf : selected) {
+                if (mf.getFile().delete()) {
+                    allFiles.remove(mf);
+                } else {
+                    errores++;
+                }
+            }
+            if (errores != 0) {
+                JOptionPane.showMessageDialog(this, "Hubo un problema eliminando " + errores + " archivos",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
+            applyFilters(newidx);
+            return true;
+        }
+    }
+
+    /**
+     * @brief Pide confirmación para eliminar la imagen seleccionada actualmente
+     *        (por índice) y de ser afirmativa
      *        la respuesta la elimina y actualiza la interfaz
      */
-    private void deleteCurrentFile() {
-        if (currentIdx < 0 || filtered.isEmpty()) return;
-        MediaFile mf = filtered.get(currentIdx);
+    private boolean deleteCurrentFile() {
+        if (currentIdx < 0 || filtered.isEmpty())
+            return false;
+        MediaFile mf = getCurrentMediaFile();
         int choice = JOptionPane.showConfirmDialog(this,
-            "¿Eliminar permanentemente?\n\n" + mf.getName(),
-            "Eliminar archivo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (choice != JOptionPane.YES_OPTION) return;
+                "¿Eliminar permanentemente?\n\n" + mf.getName(),
+                "Eliminar archivo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (choice != JOptionPane.YES_OPTION)
+            return false;
         if (mf.getFile().delete()) {
             allFiles.remove(mf);
-            applyFilters(currentIdx-1);
+            applyFilters(currentIdx - 1);
         } else {
             JOptionPane.showMessageDialog(this, "No se pudo eliminar el archivo.",
-                "Error", JOptionPane.ERROR_MESSAGE);
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
         }
+        return true;
     }
 
     /**
@@ -523,10 +833,11 @@ public class MainWindow extends JFrame {
      * @param file La ruta al archivo
      */
     private void openExternally(File file) {
-        try { Desktop.getDesktop().open(file); }
-        catch (Exception e) {
+        try {
+            Desktop.getDesktop().open(file);
+        } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error al abrir: " + e.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE);
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -535,7 +846,8 @@ public class MainWindow extends JFrame {
      * @brief Cierra la aplicación cerrando los recursos necesarios.
      */
     private void shutdown() {
-        if (activeScanner != null) activeScanner.stop();
+        if (activeScanner != null)
+            activeScanner.stop();
         viewer.shutdown();
         thumbStrip.shutdown();
         dispose();
@@ -567,9 +879,8 @@ public class MainWindow extends JFrame {
             boolean loaded = false;
             try {
                 // Si tienes el JAR de FlatLaf en tu classpath:
-                UIManager.setLookAndFeel("com.formdev.flatlaf.FlatDarkLaf"); 
+                UIManager.setLookAndFeel("com.formdev.flatlaf.FlatDarkLaf");
                 loaded = true;
-                System.out.println("Flatlaf loaded");
             } catch (Exception e) {
                 // Si no está FlatLaf, intentamos Nimbus
                 try {
@@ -577,17 +888,16 @@ public class MainWindow extends JFrame {
                         if ("Nimbus".equals(info.getName())) {
                             UIManager.setLookAndFeel(info.getClassName());
                             loaded = true;
-                            System.out.println("Flatlaf loaded");
                             break;
                         }
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
 
             // Si fallaron los anteriores, cae al del sistema
             if (!loaded) {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                System.out.println("System look loaded");
             }
 
             // Colores globales (SE APLICAN DESPUÉS DE ESTABLECER EL LOOK AND FEEL)
@@ -628,7 +938,8 @@ public class MainWindow extends JFrame {
             UIManager.put("Slider.thumbColor",       theme.getHighLight());
             UIManager.put("Slider.hoverThumbColor",  theme.getHighLight2());
 
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private void applyThemeToFrame(Theme theme) {
