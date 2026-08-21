@@ -1,24 +1,39 @@
 package com.mediaviewer.ui.panels;
 
-import com.mediaviewer.model.MediaFile;
-import com.mediaviewer.util.ThemeUtils;
-import com.mediaviewer.ui.components.*;
-import net.coobird.thumbnailator.Thumbnails;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
 
+import javax.swing.ImageIcon;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
+
+import org.bytedeco.ffmpeg.global.avutil;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.Java2DFrameConverter;
-import org.bytedeco.ffmpeg.global.avutil;
+
+import com.mediaviewer.model.MediaFile;
+import com.mediaviewer.ui.components.ThemedLabel;
+import com.mediaviewer.ui.components.ThemedPanel;
+import com.mediaviewer.ui.components.ThemedScroll;
+import com.mediaviewer.util.ThemeUtils;
+
+import net.coobird.thumbnailator.Thumbnails;
 
 /**
  * Tira horizontal de miniaturas.
@@ -50,6 +65,7 @@ public class ThumbnailStrip extends ThemedPanel {
         this.onSelect = onSelect;
 
         inner = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 3, 4), ThemeUtils.PanelType.BACKGROUND);
+        inner.setName("Thumb Inner");
 
         scroll = new ThemedScroll(inner,
             JScrollPane.VERTICAL_SCROLLBAR_NEVER,
@@ -64,7 +80,7 @@ public class ThumbnailStrip extends ThemedPanel {
             bar.setValue(bar.getValue() + e.getWheelRotation() * 30);
         });
 
-        add(scroll, BorderLayout.CENTER);
+        addToPanel(scroll, BorderLayout.CENTER);
         setPreferredSize(new Dimension(0, TH + 40));
     }
 
@@ -83,7 +99,7 @@ public class ThumbnailStrip extends ThemedPanel {
         for (int i = 0; i < newItems.size(); i++) {
             ThemedPanel cell = buildCell(i, gen);
             cells[i] = cell;
-            inner.add(cell);
+            inner.addToPanel(cell);
         }
         inner.revalidate();
         inner.repaint();
@@ -104,6 +120,7 @@ public class ThumbnailStrip extends ThemedPanel {
         ThemedPanel cell = new ThemedPanel(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND);
         cell.setPreferredSize(new Dimension(TW + 4, TH + 22));
         cell.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        cell.setName("Celda " + idx);
 
         // Label para imagen
         ThemedLabel imgLbl = new ThemedLabel("…", SwingConstants.CENTER, ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.BIG, Font.PLAIN, ThemeUtils.FontType.BASIC);
@@ -113,8 +130,8 @@ public class ThumbnailStrip extends ThemedPanel {
         // Label de nombre
         ThemedLabel nameLbl = new ThemedLabel(truncate(mf.getName(), 14), SwingConstants.CENTER, ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
 
-        cell.add(imgLbl, BorderLayout.CENTER);
-        cell.add(nameLbl, BorderLayout.SOUTH);
+        cell.addToPanel(imgLbl, BorderLayout.CENTER);
+        cell.addToPanel(nameLbl, BorderLayout.SOUTH);
         cell.setBorder(new EmptyBorder(2, 2, 2, 2));
 
         // Click
@@ -234,11 +251,11 @@ public class ThumbnailStrip extends ThemedPanel {
      * @param c El contenedor actual
      * @param bg El color de fondo al que se va a cambiar
      */
-    private void setAllBg(Container c, ThemeUtils.PanelType bg, ThemeUtils.TextType txt) {
-        ((ThemedPanel)c).setBackgroundType(bg);
+    private void setAllBg(ThemedPanel c, ThemeUtils.PanelType bg, ThemeUtils.TextType txt) {
+        c.setBackground(bg);
         for (Component ch : c.getComponents()) {
             //ch.setBackground(bg);
-            if (ch instanceof Container) setAllBg((Container)ch, bg, txt);
+            if (ch instanceof ThemedPanel) setAllBg((ThemedPanel)ch, bg, txt);
             if (ch instanceof ThemedLabel) ((ThemedLabel)ch).setForeground(txt);
         }
     }

@@ -1,22 +1,46 @@
 package com.mediaviewer.ui.panels;
 
-import com.mediaviewer.model.MediaFile;
-import com.mediaviewer.util.ThemeManager;
-import com.mediaviewer.util.Theme;
-import com.mediaviewer.util.ThemeUtils;
-import com.mediaviewer.ui.components.*;
-import net.coobird.thumbnailator.Thumbnails;
-
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import javax.swing.Timer;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Desktop;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.MediaTracker;
+import java.awt.Point;
+import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.URL;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+
+import com.mediaviewer.model.MediaFile;
+import com.mediaviewer.ui.components.ThemedButton;
+import com.mediaviewer.ui.components.ThemedLabel;
+import com.mediaviewer.ui.components.ThemedPanel;
+import com.mediaviewer.util.ThemeManager;
+import com.mediaviewer.util.ThemeUtils;
+
+import net.coobird.thumbnailator.Thumbnails;
 
 /**
  * Panel central — muestra imágenes con zoom/pan, GIFs animados, y placeholder de video.
@@ -314,8 +338,8 @@ public class ViewerPanel extends ThemedPanel {
     // ── paintComponent ────────────────────────────────────────────────────────
 
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+    protected void onDraw(Graphics g) {
+        //super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                             RenderingHints.VALUE_INTERPOLATION_BILINEAR);
@@ -330,7 +354,7 @@ public class ViewerPanel extends ThemedPanel {
         BufferedImage img = origImage;
         if (img == null) return;
 
-        int cw = getWidth(), ch = getHeight();
+        int cw = this.panel.getWidth(), ch = this.panel.getHeight();
         double fit = Math.min((double)cw / img.getWidth(),
                               (double)ch / img.getHeight());
         double z   = fit * zoom;

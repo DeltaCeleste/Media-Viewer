@@ -1,11 +1,17 @@
 package com.mediaviewer.ui.components;
 
-import com.mediaviewer.util.Theme;
+import java.awt.BorderLayout;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JTextField;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.text.Document;
-import javax.swing.border.*;
-import java.awt.*;
 
 public class ThemedTextField extends ThemedComponent {
     private JTextField field;
@@ -24,7 +30,7 @@ public class ThemedTextField extends ThemedComponent {
 
         applyTheme();
         setLayout(new BorderLayout());
-        add(label, BorderLayout.CENTER);
+        add(field, BorderLayout.CENTER);
     }
     
     @Override
@@ -34,19 +40,19 @@ public class ThemedTextField extends ThemedComponent {
         field.setCaretColor(currentTheme.getText1());
 
         if(border != null){
-            changeBorderColorByType();
+            changeBorderColorByType(this.border);
         }
     }
 
     public Document getDocument(){
-        this.field.getDocument();
+        return this.field.getDocument();
     }
 
     public String getText(){
         return field.getText();
     }
 
-    private static Border changeBorderColorByType() {
+    private Border changeBorderColorByType(Border border) {
         if (border == null) return null;
         
         // Detectar tipo y crear nuevo borde con el color cambiado
@@ -71,7 +77,7 @@ public class ThemedTextField extends ThemedComponent {
         } else if (border instanceof TitledBorder) {
             TitledBorder tb = (TitledBorder) border;
             // Cambiar color del título y del borde interno
-            Border innerBorder = changeBorderColorByType(tb.getBorder(), currentTheme.getBorder());
+            Border innerBorder = changeBorderColorByType(tb.getBorder());
             return BorderFactory.createTitledBorder(
                 innerBorder,
                 tb.getTitle(),
@@ -84,13 +90,10 @@ public class ThemedTextField extends ThemedComponent {
         } else if (border instanceof CompoundBorder) {
             CompoundBorder cb = (CompoundBorder) border;
             // Cambiar color recursivamente en ambos bordes
-            Border newOutside = changeBorderColorByType(cb.getOutsideBorder(), currentTheme.getBorder());
-            Border newInside = changeBorderColorByType(cb.getInsideBorder(), currentTheme.getBorder());
+            Border newOutside = changeBorderColorByType(cb.getOutsideBorder());
+            Border newInside = changeBorderColorByType(cb.getInsideBorder());
             return new CompoundBorder(newOutside, newInside);
             
-        } else {
-            // Si no sabemos el tipo, lo envolvemos con un borde de color
-            return new ColorOverlayBorder(border, currentTheme.getBorder());
-        }
+        } else return null;
     }
 }

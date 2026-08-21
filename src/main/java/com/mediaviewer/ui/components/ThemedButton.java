@@ -1,11 +1,14 @@
 package com.mediaviewer.ui.components;
 
-import com.mediaviewer.util.Theme;
-import com.mediaviewer.util.ThemeUtils;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
 
-import javax.swing.*;
-import javax.swing.border.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.border.Border;
+
+import com.mediaviewer.util.ThemeUtils;
 
 public class ThemedButton extends ThemedComponent {
     private JButton button;
@@ -35,12 +38,12 @@ public class ThemedButton extends ThemedComponent {
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                button.setBackground(darken(getButtonColor(this.buttonType), 0.1));
+                button.setBackground(darken(currentTheme.getButtonColor(buttonType), 0.1));
             }
             
             @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
-                button.setBackground(currentTheme.getButtonColor(this.buttonType));
+                button.setBackground(currentTheme.getButtonColor(buttonType));
             }
         });
     }
@@ -78,5 +81,9 @@ public class ThemedButton extends ThemedComponent {
 
     public void setCursor(Cursor c){
         button.setCursor(c);
+    }
+
+    public void setText(String t){
+        button.setText(t);
     }
 }

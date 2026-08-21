@@ -1,10 +1,12 @@
 package com.mediaviewer.ui.components;
 
-import com.mediaviewer.util.ThemeManager;
-import com.mediaviewer.util.Theme;
+import java.awt.Color;
+import java.awt.Font;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+
+import com.mediaviewer.util.Theme;
+import com.mediaviewer.util.ThemeManager;
 
 public abstract class ThemedComponent extends JComponent implements ThemeManager.ThemeListener {
     protected Theme currentTheme;
@@ -12,7 +14,6 @@ public abstract class ThemedComponent extends JComponent implements ThemeManager
     public ThemedComponent() {
         this.currentTheme = ThemeManager.getInstance().getCurrentTheme();
         ThemeManager.getInstance().addListener(this);
-        applyTheme();
     }
     
     @Override

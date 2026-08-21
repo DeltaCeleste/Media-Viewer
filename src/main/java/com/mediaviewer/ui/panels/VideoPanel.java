@@ -1,28 +1,45 @@
 package com.mediaviewer.ui.panels;
 
-import com.mediaviewer.model.MediaFile;
-import com.mediaviewer.util.Theme;
-import com.mediaviewer.ui.components.*;
-import com.mediaviewer.util.InitException;
-
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
-import javafx.scene.media.MediaView;
-import javafx.scene.layout.StackPane;
-import javafx.util.Duration;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.io.File;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.io.File;
+import javax.swing.BorderFactory;
+import javax.swing.JFrame;
+import javax.swing.JSlider;
+import javax.swing.SwingUtilities;
+
+import com.mediaviewer.model.MediaFile;
+import com.mediaviewer.ui.components.ThemedButton;
+import com.mediaviewer.ui.components.ThemedLabel;
+import com.mediaviewer.ui.components.ThemedPanel;
+import com.mediaviewer.util.InitException;
+import com.mediaviewer.util.Theme;
+import com.mediaviewer.util.ThemeUtils;
+import com.mediaviewer.util.ThemeUtils.FontSize;
+import com.mediaviewer.util.ThemeUtils.FontType;
+import com.mediaviewer.util.ThemeUtils.TextType;
+
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
+import javafx.util.Duration;
 
 public class VideoPanel extends ThemedPanel {
     private JFXPanel jfxPanel;
@@ -53,20 +70,22 @@ public class VideoPanel extends ThemedPanel {
 
     @Override
     protected void applyTheme() {
-        jfxPanel.setBackground(currentTheme.getBackground());
         super.applyTheme();
+        
+        if(jfxPanel != null) jfxPanel.setBackground(currentTheme.getBackground());
+        
     }
 
     public VideoPanel(File videoPath, AtomicInteger gen, Consumer<MediaFile> onFallo) throws Exception {
+        super(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND);
         int preGen = gen.get();
-        super(new BorderLayout(), PanelType.BACKGROUND);
 
         // 1. Inicializar el panel de JavaFX
         jfxPanel = new JFXPanel();
-        add(jfxPanel, BorderLayout.CENTER);
+        addToPanel(jfxPanel, BorderLayout.CENTER);
 
-        JPanel controlsPanel = createControlsPanel();
-        add(controlsPanel, BorderLayout.SOUTH);
+        ThemedPanel controlsPanel = createControlsPanel();
+        addToPanel(controlsPanel, BorderLayout.SOUTH);
 
         if(gen.get() == preGen){
             jfxPanel.addComponentListener(new ComponentAdapter() {
@@ -171,25 +190,25 @@ public class VideoPanel extends ThemedPanel {
         return false;
     }
 
-    private JPanel createControlsPanel() {
+    private ThemedPanel createControlsPanel() {
         ThemedPanel panel = new ThemedPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         
         // --- Botón Play/Pause ---
-        playPauseButton = new ThemedButton("▶", TextType.PRIMARY, FontSize.MED, Font.BOLD, FontType.SYMBOL, ButtonType.ACCENT);
+        playPauseButton = new ThemedButton("▶", TextType.PRIMARY, FontSize.MED, Font.BOLD, FontType.SYMBOL, ThemeUtils.ButtonType.ACCENT);
         playPauseButton.setOpaque(true);
         playPauseButton.setBorderPainted(false);
         playPauseButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         playPauseButton.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         playPauseButton.getButton().addActionListener(e -> togglePlayPause());
-        panel.add(playPauseButton);
+        panel.addToPanel(playPauseButton);
         
         // --- Botón Stop ---
-        stopButton = new JButton("⏹", TextType.PRIMARY, FontSize.MED, Font.BOLD, FontType.SYMBOL, ButtonType.ACCENT);
+        stopButton = new ThemedButton("⏹", ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.MED, Font.BOLD, ThemeUtils.FontType.SYMBOL, ThemeUtils.ButtonType.ACCENT);
         stopButton.setOpaque(true);
         stopButton.setBorderPainted(false);
         stopButton.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         stopButton.getButton().addActionListener(e -> stopVideo());
-        panel.add(stopButton);
+        panel.addToPanel(stopButton);
         
         // --- Barra de progreso ---
         progressSlider = new JSlider(0, 100, 0);
@@ -202,15 +221,15 @@ public class VideoPanel extends ThemedPanel {
                 seekToPosition(progressSlider.getValue() / 100.0);
             }
         });
-        panel.add(progressSlider);
+        panel.addToPanel(progressSlider);
         
         // --- Etiqueta de tiempo ---
         timeLabel = new ThemedLabel("00:00:00 / 00:00:00", TextType.PRIMARY, FontSize.SMALL, Font.PLAIN, FontType.MONO);
-        panel.add(timeLabel);
+        panel.addToPanel(timeLabel);
         
         // --- Control de volumen ---
         ThemedLabel volumeIcon = new ThemedLabel("🔊", TextType.PRIMARY, FontSize.SMALL, Font.PLAIN, FontType.EMOJI);
-        panel.add(volumeIcon);
+        panel.addToPanel(volumeIcon);
         
         volumeSlider = new JSlider(0, 100, 100);
         volumeSlider.setPreferredSize(new Dimension(80, 20));
@@ -219,15 +238,15 @@ public class VideoPanel extends ThemedPanel {
                 setVolume(volumeSlider.getValue() / 100.0);
             }
         });
-        panel.add(volumeSlider);
+        panel.addToPanel(volumeSlider);
         
         // --- Botón Pantalla Completa (opcional) ---
-        fullScreenButton = new ThemedButton("⛶", TextType.PRIMARY, FontSize.MED, Font.BOLD, FontType.SYMBOL, ButtonType.ACCENT);
+        fullScreenButton = new ThemedButton("⛶", TextType.PRIMARY, FontSize.MED, Font.BOLD, FontType.SYMBOL, ThemeUtils.ButtonType.ACCENT);
         fullScreenButton.setOpaque(true);
         fullScreenButton.setBorderPainted(false);
         fullScreenButton.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         fullScreenButton.getButton().addActionListener(e -> toggleFullScreen());
-        panel.add(fullScreenButton);
+        panel.addToPanel(fullScreenButton);
         
         return panel;
     }

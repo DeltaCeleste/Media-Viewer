@@ -1,23 +1,28 @@
 package com.mediaviewer.ui.panels;
 
-import com.mediaviewer.model.FilterOptions;
-import com.mediaviewer.util.Theme;
-import com.mediaviewer.util.ThemeUtils;
-import com.mediaviewer.ui.components.*;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Font;
 
-import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.BorderFactory;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
-import java.util.function.Supplier;
+
+import com.mediaviewer.model.FilterOptions;
+import com.mediaviewer.ui.components.ThemedCheckBox;
+import com.mediaviewer.ui.components.ThemedComboBox;
+import com.mediaviewer.ui.components.ThemedLabel;
+import com.mediaviewer.ui.components.ThemedPanel;
+import com.mediaviewer.ui.components.ThemedTextField;
+import com.mediaviewer.util.ThemeUtils;
 
 /**
  * Barra de filtros: búsqueda de texto, tipo, ordenación, subcarpetas.
  * Notifica al controlador principal cada vez que cambia algo.
  */
 public class FilterBar extends ThemedPanel {
-    private final ThemedPanel       mainPanel;
+    //private final ThemedPanel       mainPanel;
     private final ThemedTextField   searchField;
     private final ThemedComboBox    typeCombo;
     private final ThemedComboBox    sortCombo;
@@ -26,14 +31,12 @@ public class FilterBar extends ThemedPanel {
     private final Runnable     onChanged;
 
     public FilterBar(Runnable onChanged) {
-        super(new BorderLayout());
+        super(new FlowLayout(FlowLayout.LEFT, 8, 6), ThemeUtils.PanelType.PANEL, BorderFactory.createMatteBorder(0, 0, 1, 0, Color.WHITE));
         this.onChanged = onChanged;
-        mainPanel = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 8, 6), ThemeUtils.PanelType.BACKGROUND, BorderFactory.createMatteBorder(0, 0, 1, 0, Color.WHITE));
-        add(mainPanel, BorderLayout.CENTER);
 
         // Icono búsqueda
         ThemedLabel searchIco = new ThemedLabel("🔍", ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.MED, Font.PLAIN, ThemeUtils.FontType.EMOJI);
-        mainPanel.add(searchIco);
+        addToPanel(searchIco);
 
         // Campo de texto
         Border b = BorderFactory.createCompoundBorder(
@@ -42,38 +45,38 @@ public class FilterBar extends ThemedPanel {
         searchField = new ThemedTextField(20,"Filtrar por nombre (texto parcial)", b);
         
         searchField.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e)  { onChanged.run(); }
-            public void removeUpdate(DocumentEvent e)  { onChanged.run(); }
-            public void changedUpdate(DocumentEvent e) { onChanged.run(); }
+            @Override public void insertUpdate(DocumentEvent e)  { onChanged.run(); }
+            @Override public void removeUpdate(DocumentEvent e)  { onChanged.run(); }
+            @Override public void changedUpdate(DocumentEvent e) { onChanged.run(); }
         });
-        add(searchField);
+        addToPanel(searchField);
 
         // Tipo
-        add(dimLabel("Tipo:"));
+        addToPanel(dimLabel("Tipo:"));
         
         typeCombo = new ThemedComboBox(ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC,
                                        "Todo", "Imágenes", "GIFs", "Videos");
         typeCombo.addActionListener(e -> onChanged.run());
-        add(typeCombo);
+        addToPanel(typeCombo);
 
         // Ordenación
-        add(dimLabel("Orden:"));
+        addToPanel(dimLabel("Orden:"));
         sortCombo = new ThemedComboBox(ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.SYMBOL, 
             "Nombre ↑", "Nombre ↓",
             "Fecha ↑",  "Fecha ↓",
             "Tamaño ↑", "Tamaño ↓");
         sortCombo.addActionListener(e -> onChanged.run());
-        add(sortCombo);
+        addToPanel(sortCombo);
 
         // Subcarpetas
         recursiveBox = new ThemedCheckBox("Subcarpetas", ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
         recursiveBox.addActionListener(e -> onChanged.run());
-        add(recursiveBox);
+        addToPanel(recursiveBox);
 
         // Contador (a la derecha)
         countLabel = new ThemedLabel("—", ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
-        add(Box.createHorizontalStrut(20));
-        add(countLabel);
+        //addToPanel(Box.createHorizontalStrut(20));
+        //addToPanel(countLabel);
     }
 
     /** 

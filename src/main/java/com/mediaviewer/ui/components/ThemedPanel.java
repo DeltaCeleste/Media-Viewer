@@ -1,14 +1,21 @@
 package com.mediaviewer.ui.components;
 
-import com.mediaviewer.util.Theme;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
+
+import javax.swing.JPanel;
+import javax.swing.border.Border;
+import javax.swing.border.MatteBorder;
+
 import com.mediaviewer.util.ThemeUtils;
 
-import javax.swing.*;
-import javax.swing.border.*;
-import java.awt.*;
-
 public class ThemedPanel extends ThemedComponent {
-    private JPanel panel;
+    protected JPanel panel;
     private ThemeUtils.PanelType bgType;
     private Border border = null;
     
@@ -16,8 +23,7 @@ public class ThemedPanel extends ThemedComponent {
         super();
         this.border = border;
         this.bgType = bgType;
-        
-        panel = new JPanel(layout);
+        initPanel(layout);
 
         applyTheme();
         setLayout(new BorderLayout());
@@ -27,8 +33,9 @@ public class ThemedPanel extends ThemedComponent {
     public ThemedPanel(LayoutManager layout, ThemeUtils.PanelType bgType) {
         super();
         this.bgType = bgType;
-        panel.setLayout(layout);
+        initPanel(layout);
 
+        applyTheme();
         setLayout(new BorderLayout());
         add(panel);
     }
@@ -36,12 +43,35 @@ public class ThemedPanel extends ThemedComponent {
     public ThemedPanel(LayoutManager layout) {
         super();
         this.bgType = ThemeUtils.PanelType.PANEL;
-        panel.setLayout(layout);
+        initPanel(layout);
 
+        applyTheme();
         setLayout(new BorderLayout());
         add(panel);
     }
+
+    private void initPanel(LayoutManager layout){
+        panel = new JPanel(layout) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                // Delegamos el pintado a la clase hija
+                onDraw(g); 
+            }
+        };
+    }
     
+    // Método opcional
+    protected void onDraw(Graphics g){
+        return;
+    }
+
+    public void repaint() {
+        if (panel != null) {
+            panel.repaint();
+        }
+    }
+
     @Override
     protected void applyTheme() {
         panel.setBackground(currentTheme.getBG(bgType));
@@ -67,27 +97,46 @@ public class ThemedPanel extends ThemedComponent {
     }
     
     public void addToPanel(Component comp, Object constraints) {
-        panel.add(comp, constraints);
+        this.panel.add(comp, constraints);
     }
 
     public void addToPanel(Component comp) {
-        panel.add(comp);
+        this.panel.add(comp);
     }
 
+    @Override
     public void setPreferredSize(Dimension d){
         panel.setPreferredSize(d);
     }
 
+    @Override
     public void setCursor(Cursor c){
         panel.setCursor(c);
     }
 
-    public void setBackgroundType(ThemeUtils.PanelType t){
+    public void setBackground(ThemeUtils.PanelType t){
         this.bgType = t;
-        panel.setBackground(currentTheme.getBG(bgType));
+        this.panel.setBackground(currentTheme.getBG(t));
     }
 
+    @Override
     public Rectangle getBounds(){
         return this.panel.getBounds();
+    }
+
+    @Override
+    public Component[] getComponents(){
+        return this.panel.getComponents();
+    }
+
+    @Override
+    public void setName(String s){
+        super.setName(s);
+        this.panel.setName(s);
+    }
+
+    @Override
+    public void removeAll(){
+        this.panel.removeAll();
     }
 }

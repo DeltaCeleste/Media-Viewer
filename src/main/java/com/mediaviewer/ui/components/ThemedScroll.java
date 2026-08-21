@@ -1,11 +1,13 @@
 package com.mediaviewer.ui.components;
 
-import com.mediaviewer.util.Theme;
-import com.mediaviewer.util.ThemeUtils;
+import java.awt.BorderLayout;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
 import javax.swing.border.Border;
-import java.awt.*;
+
+import com.mediaviewer.util.ThemeUtils;
 
 public class ThemedScroll extends ThemedComponent {
     private JScrollPane scroll;
@@ -14,21 +16,19 @@ public class ThemedScroll extends ThemedComponent {
     public ThemedScroll(JComponent c, int n1, int n2) {
         super();
         scroll = new JScrollPane(c, n1, n2);
-        label.setOpaque(false);
+        scroll.setOpaque(false);
 
         this.type = ThemeUtils.PanelType.PANEL;
 
-        label.setFont(currentTheme.getFont(size, style, ftype));
-
         applyTheme();
         setLayout(new BorderLayout());
-        add(label, BorderLayout.CENTER);
+        add(scroll, BorderLayout.CENTER);
     }
     
     @Override
     protected void applyTheme() {
         scroll.setBackground(currentTheme.getBG(this.type));
-        scroll.getViewport().setBackground(this.type);
+        scroll.getViewport().setBackground(currentTheme.getBG(this.type));
     }
 
     public void setBackground(ThemeUtils.PanelType type){

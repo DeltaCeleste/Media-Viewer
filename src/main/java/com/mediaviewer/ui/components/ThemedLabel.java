@@ -1,10 +1,12 @@
 package com.mediaviewer.ui.components;
 
-import com.mediaviewer.util.Theme;
-import com.mediaviewer.util.ThemeUtils;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+
+import com.mediaviewer.util.ThemeUtils;
 
 public class ThemedLabel extends ThemedComponent {
     private JLabel label;
@@ -36,7 +38,7 @@ public class ThemedLabel extends ThemedComponent {
 
         this.type  = type;
 
-        label.setFont(currentTheme.getBodyFont(size, style, ftype));
+        label.setFont(currentTheme.getFont(size, style, ftype));
 
         applyTheme();
         setLayout(new BorderLayout());
@@ -61,12 +63,12 @@ public class ThemedLabel extends ThemedComponent {
     }
 
     public void setFont(ThemeUtils.FontType type, int style, ThemeUtils.FontSize size){
-        label.setFont(new Font(type, style, size));
+        label.setFont(currentTheme.getFont(size, style, type));
     }
 
     public void setForeground(ThemeUtils.TextType type){
         this.type = type;
-        label.setForeground(currentTheme.getText(type));
+        this.label.setForeground(currentTheme.getText(type));
     }
 
     public void setIcon(Icon i){

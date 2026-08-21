@@ -1,11 +1,11 @@
 package com.mediaviewer.ui.components;
 
-import com.mediaviewer.util.Theme;
-import com.mediaviewer.util.ThemeUtils;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ActionListener;
+
+import javax.swing.JComboBox;
+
+import com.mediaviewer.util.ThemeUtils;
 
 public class ThemedComboBox extends ThemedComponent {
     private JComboBox<String> cb;
@@ -35,6 +35,6 @@ public class ThemedComboBox extends ThemedComponent {
     }
 
     public String getSelectedItem(){
-        return cb.getSelectedItem();
+        return (String)cb.getSelectedItem();
     }
 }

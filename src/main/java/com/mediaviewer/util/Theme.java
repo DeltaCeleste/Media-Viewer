@@ -10,7 +10,7 @@ public enum Theme {
         @Override public Color getAccent()     { return hex("#6B7C93"); }
         @Override public Color getHighLight()  { return hex("#0284C7"); }
         @Override public Color getHighLight2() { return hex("#06B6D4"); }
-        @Override public Color getText()       { return hex("#0F172A"); }
+        @Override public Color getText1()       { return hex("#0F172A"); }
         @Override public Color getText2()      { return hex("#64748B"); }
         @Override public Color getText3()      { return hex("#FFFFFF"); }
         @Override public Color getBorder()     { return hex("#A0A8C0"); }
@@ -23,7 +23,7 @@ public enum Theme {
         @Override public Color getAccent()     { return hex("#607B96"); }
         @Override public Color getHighLight()  { return hex("#0EA5E9"); }
         @Override public Color getHighLight2() { return hex("#38BDF8"); }
-        @Override public Color getText()       { return hex("#F0F6FC"); }
+        @Override public Color getText1()       { return hex("#F0F6FC"); }
         @Override public Color getText2()      { return hex("#8B9DAE"); }
         @Override public Color getText3()      { return hex("#060D17"); }
         @Override public Color getBorder()     { return hex("#213448"); }
@@ -45,13 +45,13 @@ public enum Theme {
     public Color getBG(ThemeUtils.PanelType type){
         Color c;
         switch(type){
-            case ThemeUtils.PanelType.PANEL:
+            case PANEL:
                 c = getPanel();
                 break;
-            case ThemeUtils.PanelType.BACKGROUND:
+            case BACKGROUND:
                 c = getBackground();
                 break;
-            case ThemeUtils.PanelType.HIGHLIGHT:
+            case HIGHLIGHT:
                 c = getHighLight();
                 break;
             default:
@@ -64,19 +64,19 @@ public enum Theme {
     public Color getText(ThemeUtils.TextType type){
         Color c;
         switch(type){
-            case ThemeUtils.TextType.PRIMARY:
+            case PRIMARY:
                 c = getText1();
                 break;
-            case ThemeUtils.TextType.SECONDARY:
+            case SECONDARY:
                 c = getText2();
                 break;
-            case ThemeUtils.TextType.TERTIARY:
+            case TERTIARY:
                 c = getText3();
                 break;
-            case ThemeUtils.TextType.SUCCESS:
+            case SUCCESS:
                 c = getSuccess();
                 break;
-            case ThemeUtils.TextType.ERROR:
+            case ERROR:
                 c = getError();
                 break;
             default:
@@ -89,19 +89,19 @@ public enum Theme {
     public Color getButtonColor(ThemeUtils.ButtonType type){
         Color c;
         switch(type){
-            case ThemeUtils.ButtonType.ACCENT:
+            case ACCENT:
                 c = getAccent();
                 break;
-            case ThemeUtils.ButtonType.HIGHLIGHT:
+            case HIGHLIGHT:
                 c = getHighLight();
                 break;
-            case ThemeUtils.ButtonType.HIGHLIGHT2:
+            case HIGHLIGHT2:
                 c = getHighLight2();
                 break;
-            case ThemeUtils.ButtonType.PANEL:
+            case PANEL:
                 c = getPanel();
                 break;
-            case ThemeUtils.ButtonType.BACKGROUND:
+            case BACKGROUND:
                 c = getBackground();
                 break;
             default:
@@ -132,16 +132,16 @@ public enum Theme {
     public String getFontName(ThemeUtils.FontType type){
         String s;
         switch(type){
-            case ThemeUtils.FontType.BASIC:
+            case BASIC:
                 s = getFontNameDefault();
                 break;
-            case ThemeUtils.FontType.SYMBOL:
+            case SYMBOL:
                 s = getFontNameSymbol();
                 break;
-            case ThemeUtils.FontType.EMOJI:
+            case EMOJI:
                 s = getFontNameEmoji();
                 break; 
-            case ThemeUtils.FontType.Mono:
+            case MONO:
                 s = getFontNameMono();
                 break; 
             default:
@@ -154,16 +154,16 @@ public enum Theme {
     public Font getFont(ThemeUtils.FontSize size, int style, ThemeUtils.FontType type){
         int s;
         switch(size){
-            case ThemeUtils.FontSize.ENORMOUS:
+            case ENORMOUS:
                 s = 72;
                 break;
-            case ThemeUtils.FontSize.BIG:
+            case BIG:
                 s = 18;
                 break;
-            case ThemeUtils.FontSize.MED:
+            case MED:
                 s = 14;
                 break; 
-            case ThemeUtils.FontSize.SMALL:
+            case SMALL:
                 s = 11;
                 break; 
             default:
