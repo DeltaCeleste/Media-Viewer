@@ -54,6 +54,11 @@ public class ThemedLabel extends ThemedComponent {
         label.setText(text);
     }
 
+    public void setType(ThemeUtils.TextType t){
+        this.type = t;
+        applyTheme();
+    }
+
     public void setPreferredSize(Dimension d){
         label.setPreferredSize(d);
     }

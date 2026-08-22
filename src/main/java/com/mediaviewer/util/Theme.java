@@ -79,6 +79,9 @@ public enum Theme {
             case ERROR:
                 c = getError();
                 break;
+            case WARNING:
+                c = getWarning();
+                break;
             default:
                 c = getText1();
                 break;
@@ -112,7 +115,7 @@ public enum Theme {
     }
     
     // Métodos concretos con lógica compartida
-    public Color getSuccess() { return hex("#05FF09"); }
+    public Color getSuccess() { return hex("#35DD39"); }
     public Color getError()   { return hex("#E11D18"); }
     public Color getWarning() { return hex("#E1AD18"); }
 

@@ -268,7 +268,7 @@ public class ThumbnailStrip extends ThemedPanel {
         if (cells == null || idx < 0 || idx >= cells.length) return;
         SwingUtilities.invokeLater(() -> {
             ThemedPanel cell = cells[idx];
-            if (cell != null) inner.scrollRectToVisible(cell.getBounds());
+            if (cell != null) inner.scrollToRect(cell.getBounds());
         });
     }
 

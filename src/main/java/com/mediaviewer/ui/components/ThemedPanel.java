@@ -120,11 +120,6 @@ public class ThemedPanel extends ThemedComponent {
     }
 
     @Override
-    public Rectangle getBounds(){
-        return this.panel.getBounds();
-    }
-
-    @Override
     public Component[] getComponents(){
         return this.panel.getComponents();
     }
@@ -138,5 +133,9 @@ public class ThemedPanel extends ThemedComponent {
     @Override
     public void removeAll(){
         this.panel.removeAll();
+    }
+
+    public void scrollToRect(Rectangle r){
+        this.panel.scrollRectToVisible(r);
     }
 }

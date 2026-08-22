@@ -41,6 +41,7 @@ import com.ibm.icu.util.ULocale;
 import com.mediaviewer.engine.FileScanner;
 import com.mediaviewer.model.FilterOptions;
 import com.mediaviewer.model.MediaFile;
+import com.mediaviewer.ui.components.ThemeToggleButton;
 import com.mediaviewer.ui.components.ThemedButton;
 import com.mediaviewer.ui.components.ThemedLabel;
 import com.mediaviewer.ui.components.ThemedPanel;
@@ -109,15 +110,12 @@ public class MainWindow extends JFrame {
         setMinimumSize(new Dimension(960, 660));
         setLocationRelativeTo(null);
 
-        ThemeManager themeManager = ThemeManager.getInstance();
         String themeName = prefs.get(THEME_PREF_KEY, Theme.LIGHT.name());
         try {
             ThemeManager.setTheme(Theme.valueOf(themeName));
         } catch (IllegalArgumentException e) {
             ThemeManager.setTheme(Theme.LIGHT);
         }
-        //changeTheme();
-        System.out.println(ThemeManager.getInstance().getCurrentTheme().getThemeName());
 
         FlatInspector.install("ctrl shift alt F");
         applyLookAndFeel(ThemeManager.getInstance().getCurrentTheme());
@@ -175,24 +173,30 @@ public class MainWindow extends JFrame {
      */
     private void buildUI() {  
         // ── Barra superior ──
-        ThemedPanel topBar = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 10, 7));
+        ThemedPanel topBar = new ThemedPanel(new BorderLayout());
+
+        ThemedPanel topLeft = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 10, 7));
 
         ThemedLabel logo = new ThemedLabel("Meδia Viewer", ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.MED, Font.BOLD, ThemeUtils.FontType.SYMBOL);
-        topBar.addToPanel(logo);
+        topLeft.addToPanel(logo);
 
         ThemedButton openBtn = new ThemedButton("Abrir carpeta 📂", ThemeUtils.TextType.TERTIARY, ThemeUtils.FontSize.SMALL, Font.BOLD, ThemeUtils.FontType.EMOJI, ThemeUtils.ButtonType.HIGHLIGHT);
         openBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         openBtn.getButton().addActionListener(evt -> chooseDirectory());
-        topBar.addToPanel(openBtn);
+        topLeft.addToPanel(openBtn);
 
         dirLabel = new ThemedLabel("Sin carpeta — Ctrl+O para abrir", ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
-        topBar.addToPanel(dirLabel);
+        topLeft.addToPanel(dirLabel);
 
         scanLabel = new ThemedLabel("", ThemeUtils.TextType.SUCCESS, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
         // empujar a la derecha
-        topBar.addToPanel(Box.createHorizontalStrut(30));
-        topBar.addToPanel(scanLabel);
+        topLeft.addToPanel(Box.createHorizontalStrut(30));
+        topLeft.addToPanel(scanLabel);
 
+        ThemeToggleButton themeChanger = new ThemeToggleButton(this::changeTheme);
+
+        topBar.addToPanel(topLeft, BorderLayout.WEST);
+        topBar.addToPanel(themeChanger, BorderLayout.EAST);
         add(topBar, BorderLayout.NORTH);
 
         // ── Barra de filtros ──
@@ -472,6 +476,7 @@ public class MainWindow extends JFrame {
             selected.add(mf);
 
             int scanGen = scanLabelInteger.incrementAndGet();
+            scanLabel.setType(ThemeUtils.TextType.SUCCESS);
             scanLabel.setText(mf.getName() + " seleccionado");
             Timer t = new Timer(SHOW_SCAN_TIME, e -> {
                 if (scanLabelInteger.get() == scanGen) {
@@ -493,6 +498,7 @@ public class MainWindow extends JFrame {
             selected.remove(mf);
 
             int scanGen = scanLabelInteger.incrementAndGet();
+            scanLabel.setType(ThemeUtils.TextType.WARNING);
             scanLabel.setText(mf.getName() + " deseleccionado");
             Timer t = new Timer(SHOW_SCAN_TIME, e -> {
                 if (scanLabelInteger.get() == scanGen) {
@@ -949,6 +955,7 @@ public class MainWindow extends JFrame {
 
     private void changeTheme(){
         ThemeManager.getInstance().toggleLightDark();
+        applyThemeToFrame();
         prefs.put(THEME_PREF_KEY, ThemeManager.getInstance().getCurrentTheme().getThemeName());
     }
 }
