@@ -193,7 +193,8 @@ public class MainWindow extends JFrame {
         topLeft.addToPanel(Box.createHorizontalStrut(30));
         topLeft.addToPanel(scanLabel);
 
-        ThemeToggleButton themeChanger = new ThemeToggleButton(this::changeTheme);
+        boolean dark = ThemeManager.getInstance().getCurrentTheme().equals(Theme.DARK);
+        ThemeToggleButton themeChanger = new ThemeToggleButton(this::changeTheme, dark);
 
         topBar.addToPanel(topLeft, BorderLayout.WEST);
         topBar.addToPanel(themeChanger, BorderLayout.EAST);

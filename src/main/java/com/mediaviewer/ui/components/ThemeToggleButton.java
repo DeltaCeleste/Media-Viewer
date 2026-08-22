@@ -23,7 +23,7 @@ public class ThemeToggleButton extends ThemedComponent {
     private final Color lightHandle = new Color(255, 200, 0); // Amarillo Sol
     private final Color darkHandle = new Color(200, 210, 230); // Blanco/Azulado Luna
 
-    public ThemeToggleButton(Runnable onSelect) {
+    public ThemeToggleButton(Runnable onSelect, boolean isDark) {
         super();
         btn = new JToggleButton();
         btn.setOpaque(false);
@@ -47,6 +47,9 @@ public class ThemeToggleButton extends ThemedComponent {
             }
         });
 
+        isDarkMode = isDark;
+        btn.setSelected(isDark);
+
         applyTheme();
         setLayout(new BorderLayout());
         add(btn, BorderLayout.CENTER);
@@ -54,7 +57,7 @@ public class ThemeToggleButton extends ThemedComponent {
 
     @Override
     protected void applyTheme(){
-        
+        // Se pinta manualmente
     }
 
     @Override
@@ -64,8 +67,8 @@ public class ThemeToggleButton extends ThemedComponent {
         // Activar suavizado (Antialiasing) para bordes limpios
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int width = getWidth();
-        int height = getHeight();
+        int width = btn.getWidth();
+        int height = btn.getHeight();
         int padding = 3;
         int diameter = height - (padding * 2);
 
