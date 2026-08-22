@@ -1,3 +1,5 @@
+set version=0.1.0
+
 @echo off
 REM ============================================================
 REM  MediaViewer — Script de compilación para Windows
@@ -45,8 +47,8 @@ if %MVN_ERROR% neq 0 (
 
 echo.
 echo  Compilacion exitosa!
-echo  JAR generado en: target\MediaViewer-2.0.jar
+echo  JAR generado en: target\MediaViewer-%version%.jar
 echo.
 echo  Ejecutando la aplicacion...
-java --enable-native-access=ALL-UNNAMED -jar target\MediaViewer-0.1.0.jar
+java --enable-native-access=ALL-UNNAMED -jar target\MediaViewer-%version%.jar
 

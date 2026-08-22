@@ -3,6 +3,7 @@
 #  MediaVault — Script de compilación para Linux / macOS
 # ============================================================
 set -e
+version="0.1.0"
 
 echo ""
 echo " [MediaVault] Compilando..."
@@ -34,7 +35,7 @@ mvn clean package -q
 
 echo ""
 echo " Compilación exitosa!"
-echo " JAR: target/MediaVault-2.0.jar"
+echo " JAR: target/MediaVault-${version}.jar"
 echo ""
 echo " Ejecutando..."
-java --enable-native-access=ALL-UNNAMED -jar target/MediaViewer-0.1.0.jar
+java --enable-native-access=ALL-UNNAMED -jar target/MediaViewer-${version}.jar

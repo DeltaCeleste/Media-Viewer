@@ -22,19 +22,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
-import com.ibm.icu.text.Collator;
-import com.ibm.icu.util.ULocale;
-
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -42,6 +36,8 @@ import javax.swing.Timer;
 import javax.swing.UIManager;
 
 import com.formdev.flatlaf.extras.FlatInspector;
+import com.ibm.icu.text.Collator;
+import com.ibm.icu.util.ULocale;
 import com.mediaviewer.engine.FileScanner;
 import com.mediaviewer.model.FilterOptions;
 import com.mediaviewer.model.MediaFile;
@@ -272,7 +268,7 @@ public class MainWindow extends JFrame {
 
         viewerBar.addToPanel(viewerStatus);
         viewerBar.addToPanel(zoomButtons); 
-        viewerBar.addToPanel(Box.createHorizontalStrut(viewerStatus.getWidth()));
+        //viewerBar.addToPanel(Box.createHorizontalStrut(viewerStatus.getWidth()));
         viewerBar.addToPanel(selectStatus);
         viewerBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.WHITE));
 
