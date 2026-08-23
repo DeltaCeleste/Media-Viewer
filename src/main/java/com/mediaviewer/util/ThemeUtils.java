@@ -5,5 +5,5 @@ public class ThemeUtils {
     public enum FontType    { BASIC, SYMBOL, EMOJI, MONO }
     public enum ButtonType  { ACCENT, HIGHLIGHT, HIGHLIGHT2, PANEL, BACKGROUND }
     public enum FontSize    { ENORMOUS, BIG, MED, SMALL }
-    public enum PanelType   { PANEL, BACKGROUND, HIGHLIGHT }
+    public enum PanelType   { PANEL, BACKGROUND, HIGHLIGHT, HIGHLIGHT2, ACCENT }
 }

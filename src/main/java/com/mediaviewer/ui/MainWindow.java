@@ -29,6 +29,7 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -272,9 +273,15 @@ public class MainWindow extends JFrame {
         selectStatus = new ThemedLabel(selected.size() + " archivos seleccionados", ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
 
         viewerBar.addToPanel(viewerStatus);
+
         viewerBar.addToPanel(zoomButtons); 
-        //viewerBar.addToPanel(Box.createHorizontalStrut(viewerStatus.getWidth()));
-        viewerBar.addToPanel(selectStatus);
+
+        JPanel leftwrapper = new JPanel(new BorderLayout());
+        leftwrapper.setOpaque(false);
+        leftwrapper.add(selectStatus, BorderLayout.EAST);
+        
+
+        viewerBar.addToPanel(leftwrapper);
         viewerBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.WHITE));
 
         center.addToPanel(viewer,    BorderLayout.CENTER);
@@ -366,7 +373,7 @@ public class MainWindow extends JFrame {
         rp.getActionMap().put("select", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                toogleSelect(getCurrentMediaFile());
+                toogleSelect(currentIdx);
             }
         });
         rp.getActionMap().put("allselect", new AbstractAction() {
@@ -457,13 +464,16 @@ public class MainWindow extends JFrame {
     /**
      * @brief Introduce el índice de un archivo al conjunto seleccionados o lo saca
      *        si ya estaba seleccionado
-     * @param mf el archivo
+     * @param idx el índice del archivo en filtered
      */
-    private void toogleSelect(MediaFile mf) {
+    private void toogleSelect(int idx) {
+        MediaFile mf = getMediaFileByIdx(idx);
         if (selected.contains(mf)) {
             removeSelected(mf);
+            thumbStrip.deselect(idx);
         } else {
             addSelected(mf);
+            thumbStrip.select(idx);
         }
         selectStatus.setText(selected.size() + " archivos seleccionados");
     }
@@ -516,6 +526,7 @@ public class MainWindow extends JFrame {
      * @brief vacía el conjunto de seleccionados
      */
     private void clearSelected() {
+        thumbStrip.clearSelected();
         selected.clear();
     }
 

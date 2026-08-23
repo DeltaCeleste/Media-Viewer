@@ -59,7 +59,9 @@ public class ThemedLabel extends ThemedComponent {
         applyTheme();
     }
 
+    @Override
     public void setPreferredSize(Dimension d){
+        super.setPreferredSize(d);
         label.setPreferredSize(d);
     }
 

@@ -54,6 +54,12 @@ public enum Theme {
             case HIGHLIGHT:
                 c = getHighLight();
                 break;
+            case HIGHLIGHT2:
+                c = getHighLight2();
+                break;
+            case ACCENT:
+                c = getAccent();
+                break;
             default:
                 c = getPanel();
                 break;

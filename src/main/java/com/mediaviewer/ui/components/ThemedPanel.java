@@ -50,6 +50,16 @@ public class ThemedPanel extends ThemedComponent {
         add(panel);
     }
 
+    public ThemedPanel() {
+        super();
+        this.bgType = ThemeUtils.PanelType.PANEL;
+        initPanel(new BorderLayout());
+
+        applyTheme();
+        setLayout(new BorderLayout());
+        add(panel);
+    }
+
     private void initPanel(LayoutManager layout){
         panel = new JPanel(layout) {
             @Override
@@ -88,10 +98,12 @@ public class ThemedPanel extends ThemedComponent {
         }
     }
 
+    @Override
     public void setBorder(Border b){
         setBorderColor(b);
     }
 
+    @Override
     public void setOpaque(boolean b){
         panel.setOpaque(b);
     }

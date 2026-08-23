@@ -9,6 +9,7 @@ import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,10 +56,11 @@ public class ThumbnailStrip extends ThemedPanel {
         });
     private final AtomicInteger  genCounter = new AtomicInteger(0);
 
-    private List<MediaFile> items     = List.of();
-    public int              current   = -1;
-    private IntConsumer     onSelect;
-    private ThemedPanel[]   cells;
+    private List<MediaFile>  items     = List.of();
+    public int               current   = -1;
+    private IntConsumer      onSelect;
+    private ThemedPanel[]    cells;
+    private HashSet<Integer> selected = new HashSet<>(); 
 
     public ThumbnailStrip(IntConsumer onSelect) {
         super(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND);
@@ -240,8 +242,17 @@ public class ThumbnailStrip extends ThemedPanel {
         if (cells == null) return;
         for (int i = 0; i < cells.length; i++) {
             if (cells[i] == null) continue;
-            ThemeUtils.PanelType bg = (i == idx) ? ThemeUtils.PanelType.HIGHLIGHT : ThemeUtils.PanelType.BACKGROUND;
-            ThemeUtils.TextType txt = (i == idx) ? ThemeUtils.TextType.TERTIARY   : ThemeUtils.TextType.SECONDARY;
+
+            ThemeUtils.PanelType bg = ThemeUtils.PanelType.BACKGROUND;
+            if(i == idx){
+                bg = (selected.contains(i)) ? ThemeUtils.PanelType.HIGHLIGHT2 : ThemeUtils.PanelType.HIGHLIGHT;
+            }
+            else{
+                if (selected.contains(i)) bg = ThemeUtils.PanelType.ACCENT;
+            }
+
+            ThemeUtils.TextType txt = (i == idx || selected.contains(i)) ? ThemeUtils.TextType.TERTIARY   : ThemeUtils.TextType.SECONDARY;
+
             setAllBg(cells[i], bg, txt);
         }
     }
@@ -285,4 +296,31 @@ public class ThumbnailStrip extends ThemedPanel {
      * @brief Cierre de la pool y los hilos. No necesario por ser demonios, pero más seguro y controlado
      */
     public void shutdown() { pool.shutdownNow(); }
+
+    // ──── Seleccion ───────────────────────────────────────────────────────────────
+    /**
+     * @brief establece el índice recibido como seleccionado
+     * @param idx el índice
+     */
+    public void select(int idx){
+        if(!selected.contains(idx)){
+            selected.add(idx);
+            highlightCell(this.current);
+        }
+    }
+
+    /**
+     * @brief retira el índice recibido de los seleccionados
+     * @param idx el índice
+     */
+    public void deselect(int idx){
+        if(selected.contains(idx)){
+            selected.remove(idx);
+            highlightCell(this.current);
+        }
+    }
+
+    public void clearSelected(){
+        selected.clear();
+    }
 }

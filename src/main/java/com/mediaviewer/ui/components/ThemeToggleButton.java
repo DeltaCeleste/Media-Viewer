@@ -14,8 +14,11 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 
 import javax.swing.JToggleButton;
+import javax.swing.border.EmptyBorder;
 
 public class ThemeToggleButton extends ThemedComponent {
+    private static final int MARGIN = 5;
+
     private JToggleButton btn;
     private boolean isDarkMode = false;
 
@@ -31,7 +34,8 @@ public class ThemeToggleButton extends ThemedComponent {
         btn.setBorderPainted(false);
         btn.setContentAreaFilled(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(60, 30));
+        btn.setPreferredSize(new Dimension(40, 20));
+
 
         // Listener para cambiar el estado al hacer clic
         btn.addActionListener(e -> {
@@ -53,6 +57,7 @@ public class ThemeToggleButton extends ThemedComponent {
         applyTheme();
         setLayout(new BorderLayout());
         add(btn, BorderLayout.CENTER);
+        setBorder(new EmptyBorder(MARGIN, MARGIN, MARGIN, MARGIN));
     }
 
     @Override
@@ -75,25 +80,26 @@ public class ThemeToggleButton extends ThemedComponent {
         // 1. Dibujar el fondo del switch
         Color currentBg = currentTheme.getAccent();
         g2.setColor(currentBg);
-        g2.fill(new RoundRectangle2D.Float(0, 0, width, height, height, height));
+        g2.fill(new RoundRectangle2D.Float(MARGIN, MARGIN, width, height, height, height));
 
         // 2. Calcular posición del circulo (deslizador)
         int xPos = isDarkMode ? (width - diameter - padding) : padding;
+        xPos += MARGIN;
 
         // 3. Dibujar el círculo (Sol o Luna)
         Color currentHandle = isDarkMode ? darkHandle : lightHandle;
         g2.setColor(currentHandle);
-        g2.fill(new Ellipse2D.Float(xPos, padding, diameter, diameter));
+        g2.fill(new Ellipse2D.Float(xPos, padding + MARGIN, diameter, diameter));
 
         // 4. Dibujar detalles del icono (Sombra de luna en modo oscuro / Rayos en modo claro)
         if (isDarkMode) {
             // Recorte para formar el cóncavo de la luna
             g2.setColor(currentTheme.getAccent());
-            g2.fill(new Ellipse2D.Float(xPos + 5, padding - 1, diameter - 3, diameter - 3));
+            g2.fill(new Ellipse2D.Float(xPos + 5, padding - 1 + MARGIN, diameter - 3, diameter - 3));
         } else {
             // Centro del sol (más brillante)
             g2.setColor(new Color(255, 225, 100));
-            g2.fill(new Ellipse2D.Float(xPos + 4, padding + 4, diameter - 8, diameter - 8));
+            g2.fill(new Ellipse2D.Float(xPos + 4, padding + 4 + MARGIN, diameter - 8, diameter - 8));
         }
 
         g2.dispose();

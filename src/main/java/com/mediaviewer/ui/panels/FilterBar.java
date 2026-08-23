@@ -72,7 +72,7 @@ public class FilterBar extends ThemedPanel {
 
         // Subcarpetas
         recursiveBox = new ThemedCheckBox("Subcarpetas", ThemeUtils.TextType.PRIMARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
-        recursiveBox.addActionListener(e -> onChanged.run());
+        recursiveBox.addActionListener(e -> onChangedRecursive.run());
         addToPanel(recursiveBox);
 
         // Contador (a la derecha)
