@@ -11,6 +11,8 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -206,7 +208,7 @@ public class MainWindow extends JFrame {
         add(filterBar, BorderLayout.AFTER_LAST_LINE); // provisional, se reordena
 
         // ── Panel principal (split) ──
-        viewer = new ViewerPanel();
+        viewer = new ViewerPanel(getRootPane()::requestFocusInWindow);
         viewerStatus = new ThemedLabel("Selecciona una carpeta para empezar", ThemeUtils.TextType.SECONDARY, ThemeUtils.FontSize.SMALL, Font.PLAIN, ThemeUtils.FontType.BASIC);
         viewer.setStatusLabel(viewerStatus);
 
@@ -250,7 +252,7 @@ public class MainWindow extends JFrame {
      * @return El panel construido
      */
     private ThemedPanel buildCenterPanel() {
-        thumbStrip = new ThumbnailStrip(this::selectByIndex);
+        thumbStrip = new ThumbnailStrip(this::selectByIndex, getRootPane()::requestFocusInWindow);
         thumbStrip.setName("ThumbStrip");
 
         ThemedPanel center = new ThemedPanel(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND, BorderFactory.createMatteBorder(1, 0, 0, 0, Color.WHITE));
@@ -345,6 +347,10 @@ public class MainWindow extends JFrame {
     private void bindKeys() {
         JRootPane rp = getRootPane();
 
+        // Listener para recuperar el foco al clicar fuera de un botón
+        rp.setFocusable(true);
+        rp.addMouseListener(new MouseAdapter() { @Override public void mousePressed(MouseEvent e) { rp.requestFocusInWindow(); } });
+
         // Movimiento
         // =====================================================================================================
         KeyStroke left = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0); // Una a la izquierda
@@ -357,10 +363,10 @@ public class MainWindow extends JFrame {
         rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlleft, "first");
         rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlright, "last");
 
-        rp.getActionMap().put("prev",       new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(currentIdx - 1); } });
-        rp.getActionMap().put("next",       new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(currentIdx + 1); } });
-        rp.getActionMap().put("first",      new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(0); } });
-        rp.getActionMap().put("last",       new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(filtered.size() - 1); } });
+        rp.getActionMap().put("prev",  new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(currentIdx - 1); } });
+        rp.getActionMap().put("next",  new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(currentIdx + 1); } });
+        rp.getActionMap().put("first", new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(0); } });
+        rp.getActionMap().put("last",  new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { goTo(filtered.size() - 1); } });
 
         // Selección
         // =======================================================================================================
@@ -370,18 +376,8 @@ public class MainWindow extends JFrame {
         rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(up, "select");
         rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlA, "allselect");
 
-        rp.getActionMap().put("select", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                toogleSelect(currentIdx);
-            }
-        });
-        rp.getActionMap().put("allselect", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                selectAll();
-            }
-        });
+        rp.getActionMap().put("select",    new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { toogleSelect(currentIdx); } });
+        rp.getActionMap().put("allselect", new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { selectAll(); } });
 
         // Borrado
         // =========================================================================================================
@@ -393,28 +389,9 @@ public class MainWindow extends JFrame {
         rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrldel,  "inversedelete");
         rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(shiftdel, "inversecappeddelete");
 
-        rp.getActionMap().put("delete", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                deleteCurrentSelection();
-            }
-        });
-
-        rp.getActionMap().put("inversedelete", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                deleteButcurrentSelection(false);
-            }
-        });
-
-        rp.getActionMap().put("inversecappeddelete", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                deleteButcurrentSelection(true);
-            }
-        });
-
-        
+        rp.getActionMap().put("delete",              new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { deleteCurrentSelection(); } });
+        rp.getActionMap().put("inversedelete",       new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { deleteButcurrentSelection(false); } });
+        rp.getActionMap().put("inversecappeddelete", new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { deleteButcurrentSelection(true); } });        
 
         // Otras funciones
         // =================================================================================================
@@ -433,30 +410,10 @@ public class MainWindow extends JFrame {
         rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ctrlO, "open");
         rp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(enter, "external");
 
-        rp.getActionMap().put("test", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.out.println("Nada que probar");
-            }
-        });
-        rp.getActionMap().put("refresh", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                startScan();
-            }
-        });
-        rp.getActionMap().put("open", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                chooseDirectory();
-            }
-        });
-        rp.getActionMap().put("external", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                openExternally(getCurrentFile());
-            }
-        });
+        rp.getActionMap().put("test",     new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { System.out.println("Nada que probar"); } });
+        rp.getActionMap().put("refresh",  new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { startScan(); } });
+        rp.getActionMap().put("open",     new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { chooseDirectory(); } });
+        rp.getActionMap().put("external", new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { openExternally(getCurrentFile()); } });
 
     }
 
@@ -605,6 +562,7 @@ public class MainWindow extends JFrame {
             activeScanner.stop();
 
         FilterOptions opts = filterBar.get();
+        scanLabel.setType(ThemeUtils.TextType.WARNING);
         scanLabel.setText("Escaneando…");
 
         scanLabelInteger.incrementAndGet();
@@ -616,6 +574,7 @@ public class MainWindow extends JFrame {
                 opts.recursive(),
                 files -> { // onDone — ya en EDT via done()
                     allFiles = files;
+                    scanLabel.setType(ThemeUtils.TextType.SUCCESS);
                     scanLabel.setText(files.size() + " archivos encontrados");
                     Timer t = new Timer(SHOW_SCAN_TIME, e -> {
                         if (scanLabelInteger.get() == scanGen) {

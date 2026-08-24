@@ -10,7 +10,7 @@ import javax.swing.border.Border;
 import com.mediaviewer.util.ThemeUtils;
 
 public class ThemedScroll extends ThemedComponent {
-    private JScrollPane scroll;
+    private final JScrollPane scroll;
     private ThemeUtils.PanelType type;
     
     public ThemedScroll(JComponent c, int n1, int n2) {
@@ -43,5 +43,4 @@ public class ThemedScroll extends ThemedComponent {
     public JScrollBar getHorizontalScrollBar(){
         return scroll.getHorizontalScrollBar();
     }
-    
 }

@@ -8,6 +8,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.util.HashSet;
 import java.util.List;
@@ -62,9 +63,18 @@ public class ThumbnailStrip extends ThemedPanel {
     private ThemedPanel[]    cells;
     private HashSet<Integer> selected = new HashSet<>(); 
 
-    public ThumbnailStrip(IntConsumer onSelect) {
+    public ThumbnailStrip(IntConsumer onSelect, Runnable onFocusRequest) {
         super(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND);
         this.onSelect = onSelect;
+
+        // Retorno de Focus al main frame
+        panel.addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) {
+                if(onFocusRequest != null){
+                    onFocusRequest.run();
+                }
+            }
+        });
 
         inner = new ThemedPanel(new FlowLayout(FlowLayout.LEFT, 3, 4), ThemeUtils.PanelType.BACKGROUND);
         inner.setName("Thumb Inner");
@@ -80,6 +90,20 @@ public class ThumbnailStrip extends ThemedPanel {
         scroll.addMouseWheelListener(e -> {
             JScrollBar bar = scroll.getHorizontalScrollBar();
             bar.setValue(bar.getValue() + e.getWheelRotation() * 30);
+        });
+        inner.addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) {
+                if(onFocusRequest != null){
+                    onFocusRequest.run();
+                }
+            }
+        });
+        scroll.getHorizontalScrollBar().addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) {
+                if(onFocusRequest != null){
+                    onFocusRequest.run();
+                }
+            }
         });
 
         addToPanel(scroll, BorderLayout.CENTER);
@@ -137,11 +161,16 @@ public class ThumbnailStrip extends ThemedPanel {
         cell.setBorder(new EmptyBorder(2, 2, 2, 2));
 
         // Click
-        MouseAdapter click = new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) { onSelect.accept(idx); }
-        };
         for (Component c : new Component[]{cell, imgLbl, nameLbl})
-            c.addMouseListener(click);
+            c.addMouseListener(new MouseAdapter() {
+                @Override public void mouseClicked(MouseEvent e) { 
+                    onSelect.accept(idx); 
+
+                    for (MouseListener ml : panel.getMouseListeners()) {
+                        ml.mousePressed(e);
+                    }
+                }
+            });
 
         // Carga de miniatura en pool
         if (mf.getType() != MediaFile.MediaType.VIDEO) {

@@ -11,9 +11,9 @@ import javax.swing.border.Border;
 import com.mediaviewer.util.ThemeUtils;
 
 public class ThemedButton extends ThemedComponent {
-    private JButton button;
-    private ThemeUtils.TextType textType;
-    private ThemeUtils.ButtonType buttonType;
+    private final JButton button;
+    private final ThemeUtils.TextType textType;
+    private final ThemeUtils.ButtonType buttonType;
     
     public ThemedButton(String text, ThemeUtils.TextType textType, ThemeUtils.FontSize size, int style, ThemeUtils.FontType ftype, ThemeUtils.ButtonType buttonType) {
         super();
@@ -59,6 +59,7 @@ public class ThemedButton extends ThemedComponent {
         return button;
     }
 
+    @Override
     public void setBorder(Border b){
         button.setBorder(b);
     }
@@ -67,6 +68,7 @@ public class ThemedButton extends ThemedComponent {
         button.setBorderPainted(b);
     }
 
+    @Override
     public void setOpaque(boolean b){
         button.setOpaque(b);
     }
@@ -75,10 +77,12 @@ public class ThemedButton extends ThemedComponent {
         button.setFocusPainted(b);
     }
 
+    @Override
     public void setPreferredSize(Dimension d){
         button.setPreferredSize(d);
     }
 
+    @Override
     public void setCursor(Cursor c){
         button.setCursor(c);
     }

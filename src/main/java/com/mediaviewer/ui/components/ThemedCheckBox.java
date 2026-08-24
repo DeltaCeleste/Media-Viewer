@@ -1,11 +1,11 @@
 package com.mediaviewer.ui.components;
 
-import com.mediaviewer.util.Theme;
-import com.mediaviewer.util.ThemeUtils;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ActionListener;
+
+import javax.swing.JCheckBox;
+
+import com.mediaviewer.util.ThemeUtils;
 
 public class ThemedCheckBox extends ThemedComponent {
     private JCheckBox box;
@@ -16,6 +16,7 @@ public class ThemedCheckBox extends ThemedComponent {
         super();
         this.type = type;
         box = new JCheckBox(text);
+        box.setFocusable(false);
 
         box.setFont(currentTheme.getFont(size, style, ftype));
 

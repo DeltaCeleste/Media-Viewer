@@ -92,9 +92,9 @@ public class ViewerPanel extends ThemedPanel {
     // ── Callback ─────────────────────────────────────────────────────────────
     private ThemedLabel statusLabel;   // inyectado desde fuera
 
-    public ViewerPanel() {
+    public ViewerPanel(Runnable onFocusRequest) {
         super(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND);
-        setupMouse();
+        setupMouse(onFocusRequest);
         setupSpinner();
     }
 
@@ -402,9 +402,13 @@ public class ViewerPanel extends ThemedPanel {
     /**
      * @brief Crea y añade los listenners para permitir manipulación del archivo mediante ratón
      */
-    private void setupMouse() {
+    private void setupMouse(Runnable onFocusRequest) {
         MouseAdapter ma = new MouseAdapter() {
             @Override public void mousePressed(MouseEvent e) {
+                if(onFocusRequest != null){
+                    onFocusRequest.run();
+                }
+                
                 if (SwingUtilities.isRightMouseButton(e) ||
                     SwingUtilities.isMiddleMouseButton(e)) {
                     panStart = e.getPoint();
