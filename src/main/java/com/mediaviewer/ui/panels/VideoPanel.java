@@ -11,6 +11,8 @@ import java.awt.GraphicsEnvironment;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -121,7 +123,12 @@ public class VideoPanel extends ThemedPanel {
 
             if(gen.get() != preGen){ return; }
 
-            Media media = new Media(videoFile.toURI().toString());
+            File tempVideo = File.createTempFile("preview_", ".tmp");
+            tempVideo.deleteOnExit(); // Se borra automáticamente al cerrar la JVM
+            Files.copy(videoFile.toPath(), tempVideo.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+
+            Media media = new Media(tempVideo.toURI().toString());
             mediaPlayer = new MediaPlayer(media);
 
             media.setOnError(() -> {
@@ -442,6 +449,7 @@ public class VideoPanel extends ThemedPanel {
             if (mediaPlayer != null) {
                 mediaPlayer.stop();
                 mediaPlayer.dispose();
+                mediaPlayer = null;
             }
         });
     }

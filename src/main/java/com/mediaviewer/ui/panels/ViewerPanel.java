@@ -19,7 +19,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -190,7 +192,17 @@ public class ViewerPanel extends ThemedPanel {
                 // Verificar que el archivo existe antes de proceder
                 if (!mf.getFile().exists() || loadGen.get() != gen) return;
                 URL url = mf.getFile().toURI().toURL();
-                ImageIcon icon = new ImageIcon(url);
+
+                URLConnection conn = url.openConnection();
+                conn.setUseCaches(false); // <--- Desactiva la caché que bloquea el archivo
+
+                // 2. Leer los bytes directamente del stream deshabilitando caché
+                byte[] imageBytes;
+                try (InputStream in = conn.getInputStream()) {
+                    imageBytes = in.readAllBytes();
+                }
+
+                ImageIcon icon = new ImageIcon(imageBytes);
                 // Esperar a que el primer frame cargue
                 MediaTracker mt = new MediaTracker(new JLabel());
                 mt.addImage(icon.getImage(), 0);

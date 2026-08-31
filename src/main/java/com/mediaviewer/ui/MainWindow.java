@@ -769,7 +769,6 @@ public class MainWindow extends JFrame {
                     "Eliminar seleccion de archivos", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (choice != JOptionPane.YES_OPTION)
                 return false;
-            ;
             int errores = 0;
             int newidx = findClosestIdx();
 
