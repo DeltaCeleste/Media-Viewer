@@ -14,7 +14,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.text.Document;
 
 public class ThemedTextField extends ThemedComponent {
-    private JTextField field;
+    private final JTextField field;
     private Border border = null;
 
     
@@ -50,6 +50,10 @@ public class ThemedTextField extends ThemedComponent {
 
     public String getText(){
         return field.getText();
+    }
+
+    public void setText(String s){
+        field.setText(s);
     }
 
     private Border changeBorderColorByType(Border border) {

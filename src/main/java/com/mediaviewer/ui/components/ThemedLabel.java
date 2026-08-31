@@ -81,4 +81,8 @@ public class ThemedLabel extends ThemedComponent {
     public void setIcon(Icon i){
         this.label.setIcon(i);
     }
+
+    public void setAlignmentX(int i){
+        label.setAlignmentX(i);
+    }
 }

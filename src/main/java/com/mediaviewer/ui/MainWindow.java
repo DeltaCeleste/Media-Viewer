@@ -33,6 +33,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
+import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -48,7 +49,9 @@ import com.mediaviewer.ui.components.ThemeToggleButton;
 import com.mediaviewer.ui.components.ThemedButton;
 import com.mediaviewer.ui.components.ThemedLabel;
 import com.mediaviewer.ui.components.ThemedPanel;
+import com.mediaviewer.ui.components.ThemedSplitPanel;
 import com.mediaviewer.ui.panels.FilterBar;
+import com.mediaviewer.ui.panels.MetadataPanel;
 import com.mediaviewer.ui.panels.ThumbnailStrip;
 import com.mediaviewer.ui.panels.ViewerPanel;
 import com.mediaviewer.util.Theme;
@@ -94,7 +97,7 @@ public class MainWindow extends JFrame {
     private ViewerPanel viewer;
     private ThumbnailStrip thumbStrip;
     //private FileListPanel  fileList;
-    //private MetadataPanel  metaPanel;
+    private MetadataPanel  metaPanel;
     private FilterBar      filterBar;
     private ThemedLabel    dirLabel;
     private ThemedLabel    scanLabel;
@@ -214,7 +217,6 @@ public class MainWindow extends JFrame {
 
         /*
          * fileList = new FileListPanel(this::selectByIndex);
-         * metaPanel = new MetadataPanel(this::onSaved);
          * 
          * JSplitPane leftSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
          * fileList, buildCenterPanel());
@@ -232,11 +234,22 @@ public class MainWindow extends JFrame {
          * mainSplit.setResizeWeight(1.0);
          */
 
+        metaPanel = new MetadataPanel(this::onSaved);
+        ThemedSplitPanel mainSplit = new ThemedSplitPanel(JSplitPane.HORIZONTAL_SPLIT,
+        buildCenterPanel(), metaPanel);
+        metaPanel.setMinimumSize(new Dimension(0,0));
+        mainSplit.setDividerLocation(getWidth() - 300);
+        mainSplit.setDividerSize(5);
+        mainSplit.setBorder(null);
+        mainSplit.setBackground(ThemeUtils.PanelType.BACKGROUND);
+        mainSplit.setResizeWeight(1.0);
+        mainSplit.setOneTouchExpandable(true);
+
         // Layout con filtros arriba y split en centro
         ThemedPanel body = new ThemedPanel(new BorderLayout(), ThemeUtils.PanelType.BACKGROUND);
         body.addToPanel(filterBar, BorderLayout.NORTH);
-        //body.add(mainSplit, BorderLayout.CENTER);
-        body.addToPanel(buildCenterPanel(), BorderLayout.CENTER);
+        body.addToPanel(mainSplit, BorderLayout.CENTER);
+        //body.addToPanel(buildCenterPanel(), BorderLayout.CENTER);
         add(body, BorderLayout.CENTER);
 
         // ── Barra inferior (navegación) ──
@@ -680,7 +693,7 @@ public class MainWindow extends JFrame {
             return;
 
         viewer.load(mf);
-        // metaPanel.load(mf);
+        metaPanel.load(mf);
         // fileList.highlight(idx);
         thumbStrip.highlight(idx);
         posLabel.setText((idx + 1) + " / " + filtered.size() + "   " + mf.getName());

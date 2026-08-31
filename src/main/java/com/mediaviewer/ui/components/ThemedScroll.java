@@ -1,6 +1,7 @@
 package com.mediaviewer.ui.components;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
@@ -16,6 +17,18 @@ public class ThemedScroll extends ThemedComponent {
     public ThemedScroll(JComponent c, int n1, int n2) {
         super();
         scroll = new JScrollPane(c, n1, n2);
+        scroll.setOpaque(false);
+
+        this.type = ThemeUtils.PanelType.PANEL;
+
+        applyTheme();
+        setLayout(new BorderLayout());
+        add(scroll, BorderLayout.CENTER);
+    }
+
+    public ThemedScroll(JComponent c) {
+        super();
+        scroll = new JScrollPane(c);
         scroll.setOpaque(false);
 
         this.type = ThemeUtils.PanelType.PANEL;
@@ -42,5 +55,10 @@ public class ThemedScroll extends ThemedComponent {
 
     public JScrollBar getHorizontalScrollBar(){
         return scroll.getHorizontalScrollBar();
+    }
+
+    @Override
+    public void setPreferredSize(Dimension d){
+        scroll.setPreferredSize(d);
     }
 }

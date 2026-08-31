@@ -90,4 +90,13 @@ public class ThemedButton extends ThemedComponent {
     public void setText(String t){
         button.setText(t);
     }
+
+    public void setAlignmentX(int i){
+        button.setAlignmentX(i);
+    }
+
+    @Override
+    public void setMaximumSize(Dimension d){
+        button.setMaximumSize(d);
+    }
 }

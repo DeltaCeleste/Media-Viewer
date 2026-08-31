@@ -10,6 +10,7 @@ import java.awt.Rectangle;
 
 import javax.swing.JPanel;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 
 import com.mediaviewer.util.ThemeUtils;
@@ -70,6 +71,8 @@ public class ThemedPanel extends ThemedComponent {
             }
         };
     }
+
+    public JPanel getPanel() { return this.panel; }
     
     // Método opcional
     protected void onDraw(Graphics g){
@@ -94,6 +97,10 @@ public class ThemedPanel extends ThemedComponent {
             if(b instanceof MatteBorder){
                 MatteBorder mb = (MatteBorder) b;
                 panel.setBorder(new MatteBorder(mb.getBorderInsets(), currentTheme.getBorder()));
+            }
+            else if (b instanceof EmptyBorder){
+                EmptyBorder eb = (EmptyBorder) b;
+                panel.setBorder(b);
             }
         }
     }
@@ -149,5 +156,23 @@ public class ThemedPanel extends ThemedComponent {
 
     public void scrollToRect(Rectangle r){
         this.panel.scrollRectToVisible(r);
+    }
+
+    public void setPanelLayout(LayoutManager layout){
+        this.panel.setLayout(layout);
+    }
+
+    @Override
+    public void setMaximumSize(Dimension d){
+        this.panel.setMaximumSize(d);
+    }
+
+    @Override
+    public void setMinimumSize(Dimension d){
+        this.panel.setMaximumSize(d);
+    }
+
+    public void setAlignmentX(int i){
+        this.panel.setAlignmentX(i);
     }
 }
