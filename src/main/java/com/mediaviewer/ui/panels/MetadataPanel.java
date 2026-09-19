@@ -10,6 +10,7 @@ import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -170,9 +171,9 @@ public class MetadataPanel extends ThemedPanel {
         copyInteger.incrementAndGet();
         statusLbl.setText(" ");
 
-        SwingWorker<Map<String, Map<String, String>>, Void> worker =
+        SwingWorker<Map<String, Map<String, List<String>>>, Void> worker =
             new SwingWorker<>() {
-                @Override protected Map<String, Map<String, String>> doInBackground() {
+                @Override protected Map<String, Map<String, List<String>>> doInBackground() {
                     return MetadataEngine.read(mf);
                 }
                 @Override protected void done() {
@@ -192,14 +193,19 @@ public class MetadataPanel extends ThemedPanel {
         treeModel.setRoot(root);
     }
 
-    private void populateTree(Map<String, Map<String, String>> meta) {
+    private void populateTree(Map<String, Map<String, List<String>>> meta) {
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Metadatos");
         for (var entry : meta.entrySet()) {
             DefaultMutableTreeNode section =
                 new DefaultMutableTreeNode(entry.getKey());
             for (var field : entry.getValue().entrySet()) {
-                section.add(new DefaultMutableTreeNode(
-                    field.getKey() + ": " + field.getValue()));
+                //System.out.println(field.getValue());
+                for (String value : field.getValue()) {
+                    section.add(new DefaultMutableTreeNode(
+                        field.getKey() + ": " + value));
+                }
+                //section.add(new DefaultMutableTreeNode(
+                //    field.getKey() + ": " + field.getValue()));
             }
             root.add(section);
         }
@@ -208,14 +214,14 @@ public class MetadataPanel extends ThemedPanel {
         for (int i = 0; i < tree.getRowCount(); i++) tree.getTree().expandRow(i);
     }
 
-    private void prefillEditFields(Map<String, Map<String, String>> meta) {
+    private void prefillEditFields(Map<String, Map<String, List<String>>> meta) {
         for (var section : meta.values()) {
             for (var entry : section.entrySet()) {
                 for (String key : EDITABLE_FIELDS) {
                     if (entry.getKey().equalsIgnoreCase(key) ||
                         entry.getKey().equalsIgnoreCase(
                             FIELD_LABELS.getOrDefault(key, key))) {
-                        editFields.get(key).setText(entry.getValue());
+                        editFields.get(key).setText(entry.getValue().getFirst());
                     }
                 }
             }

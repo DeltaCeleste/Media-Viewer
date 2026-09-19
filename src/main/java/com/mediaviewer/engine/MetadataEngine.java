@@ -1,16 +1,22 @@
 package com.mediaviewer.engine;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.imageio.ImageIO;
+
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
 import com.mediaviewer.model.MediaFile;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
 
 /**
  * Motor de metadatos — TODAS las operaciones son síncronas.
@@ -28,15 +34,15 @@ public class MetadataEngine {
      * Lee todos los metadatos disponibles del archivo.
      * @return mapa ordenado sección → { campo → valor }
      */
-    public static Map<String, Map<String, String>> read(MediaFile mf) {
-        Map<String, Map<String, String>> result = new LinkedHashMap<>();
+    public static Map<String, Map<String, List<String>>> read(MediaFile mf) {
+        Map<String, Map<String, List<String>>> result = new LinkedHashMap<>();
 
         // Sección: info básica del archivo
-        Map<String, String> fileInfo = new LinkedHashMap<>();
-        fileInfo.put("Nombre",    mf.getName());
-        fileInfo.put("Ruta",      mf.getPath());
-        fileInfo.put("Tamaño",    mf.getHumanSize());
-        fileInfo.put("Modificado",mf.getFormattedDate());
+        Map<String, List<String>> fileInfo = new LinkedHashMap<>();
+        fileInfo.computeIfAbsent("Nombre",     k -> new ArrayList<>()).add(mf.getName());
+        fileInfo.computeIfAbsent("Ruta",       k -> new ArrayList<>()).add(mf.getPath());
+        fileInfo.computeIfAbsent("Tamaño",     k -> new ArrayList<>()).add(mf.getHumanSize());
+        fileInfo.computeIfAbsent("Modificado", k -> new ArrayList<>()).add(mf.getFormattedDate());
         result.put("📁 Archivo", fileInfo);
 
         switch (mf.getType()) {
@@ -49,15 +55,15 @@ public class MetadataEngine {
     // ── Imagen ────────────────────────────────────────────────────────────────
 
     private static void readImageMeta(MediaFile mf,
-                                       Map<String, Map<String, String>> out) {
+                                       Map<String, Map<String, List<String>>> out) {
         // Dimensiones con ImageIO (no carga píxeles completos si usamos getImageDimension)
         try {
             BufferedImage img = ImageIO.read(mf.getFile());
             if (img != null) {
-                Map<String, String> imgInfo = new LinkedHashMap<>();
-                imgInfo.put("Dimensiones", img.getWidth() + " × " + img.getHeight() + " px");
-                imgInfo.put("Tipo color",  colorTypeName(img.getType()));
-                imgInfo.put("Formato",     mf.getExt().toUpperCase().replace(".", ""));
+                Map<String, List<String>> imgInfo = new LinkedHashMap<>();
+                imgInfo.computeIfAbsent("Dimensiones", k -> new ArrayList<>()).add(img.getWidth() + " × " + img.getHeight() + " px");
+                imgInfo.computeIfAbsent("Tipo color",  k -> new ArrayList<>()).add(colorTypeName(img.getType()));
+                imgInfo.computeIfAbsent("Formato",     k -> new ArrayList<>()).add(mf.getExt().toUpperCase().replace(".", ""));
                 out.put("🖼 Imagen", imgInfo);
             }
         } catch (Exception ignored) {}
@@ -67,18 +73,30 @@ public class MetadataEngine {
             Metadata metadata = ImageMetadataReader.readMetadata(mf.getFile());
             for (Directory dir : metadata.getDirectories()) {
                 String sectionName = sectionIcon(dir.getName()) + " " + dir.getName();
-                Map<String, String> tags = new LinkedHashMap<>();
+                Map<String, List<String>> tags = new LinkedHashMap<>();
                 for (Tag tag : dir.getTags()) {
                     String desc = tag.getDescription();
                     if (desc != null && desc.length() < 300) {
-                        tags.put(tag.getTagName(), desc);
+                        tags.computeIfAbsent(tag.getTagName(), k -> new ArrayList<>()).add(desc);
                     }
                 }
-                if (!tags.isEmpty()) out.put(sectionName, tags);
+                if (!tags.isEmpty()) {
+                    if (!out.containsKey(sectionName)) {
+                        out.put(sectionName, tags);
+                    }
+                    else {
+                        Map<String, List<String>> section = out.get(sectionName);
+                        for (var entry : tags.entrySet()){
+                            section.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
+                        }
+                        out.put(sectionName, section);
+                    }
+                    
+                }
             }
         } catch (Exception e) {
-            Map<String, String> err = new LinkedHashMap<>();
-            err.put("Error", e.getMessage());
+            Map<String, List<String>> err = new LinkedHashMap<>();
+            err.computeIfAbsent("Error", k -> new ArrayList<>()).add(e.getMessage());
             out.put("⚠ Metadatos", err);
         }
     }
@@ -109,24 +127,24 @@ public class MetadataEngine {
     // ── Video ─────────────────────────────────────────────────────────────────
 
     private static void readVideoMeta(MediaFile mf,
-                                       Map<String, Map<String, String>> out) {
+                                       Map<String, Map<String, List<String>>> out) {
         // metadata-extractor soporta MP4/MOV; para otros formatos mostramos info básica
         try {
             Metadata metadata = ImageMetadataReader.readMetadata(mf.getFile());
             for (Directory dir : metadata.getDirectories()) {
                 String sectionName = "🎬 " + dir.getName();
-                Map<String, String> tags = new LinkedHashMap<>();
+                Map<String, List<String>> tags = new LinkedHashMap<>();
                 for (Tag tag : dir.getTags()) {
                     String desc = tag.getDescription();
                     if (desc != null && desc.length() < 300)
-                        tags.put(tag.getTagName(), desc);
+                        tags.computeIfAbsent(tag.getTagName(), k -> new ArrayList<>()).add(desc);
                 }
                 if (!tags.isEmpty()) out.put(sectionName, tags);
             }
         } catch (Exception e) {
-            Map<String, String> info = new LinkedHashMap<>();
-            info.put("Formato", mf.getExt().toUpperCase().replace(".", ""));
-            info.put("Nota",    "Metadatos internos no disponibles para este formato.");
+            Map<String, List<String>> info = new LinkedHashMap<>();
+            info.computeIfAbsent("Formato", k -> new ArrayList<>()).add(mf.getExt().toUpperCase().replace(".", ""));
+            info.computeIfAbsent("Nota",    k -> new ArrayList<>()).add("Metadatos internos no disponibles para este formato.");
             out.put("🎬 Video", info);
         }
     }
