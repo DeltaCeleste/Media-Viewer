@@ -90,20 +90,23 @@ public class MainWindow extends JFrame {
 
     // ── Persistencia ─────────────────────────────────────────────────────────
     private final Preferences prefs = Preferences.userNodeForPackage(MainWindow.class);
-    private final static String THEME_PREF_KEY = "theme";
-    private final static String DIR_PREF_KEY   = "lastDir";
+    private final static String THEME_PREF_KEY    = "theme";
+    private final static String DIR_PREF_KEY      = "lastDir";
+    private final static String COLLAPSE_PREF_KEY = "collapseState";
 
     // ── Paneles ───────────────────────────────────────────────────────────────
     private ViewerPanel viewer;
-    private ThumbnailStrip thumbStrip;
+    private ThumbnailStrip   thumbStrip;
     //private FileListPanel  fileList;
-    private MetadataPanel  metaPanel;
-    private FilterBar      filterBar;
-    private ThemedLabel    dirLabel;
-    private ThemedLabel    scanLabel;
-    private ThemedLabel    posLabel;
-    private ThemedLabel    viewerStatus;
-    private ThemedLabel    selectStatus;
+    private MetadataPanel    metaPanel;
+    private FilterBar        filterBar;
+    private ThemedLabel      dirLabel;
+    private ThemedLabel      scanLabel;
+    private ThemedLabel      posLabel;
+    private ThemedLabel      viewerStatus;
+    private ThemedLabel      selectStatus;
+    //Splits
+    private ThemedSplitPanel mainSplit;
 
     // ── Control ─────────────────────────────────────────────────────────────
     private final AtomicInteger scanLabelInteger = new AtomicInteger(0);
@@ -142,6 +145,8 @@ public class MainWindow extends JFrame {
             if (f.isDirectory())
                 SwingUtilities.invokeLater(() -> loadDirectory(f));
         }
+
+        SwingUtilities.invokeLater(() -> applyUIprefs());
 
         // Registrar frame como listener
         ThemeManager.getInstance().addListener(this::applyThemeToFrame);
@@ -235,11 +240,11 @@ public class MainWindow extends JFrame {
          */
 
         metaPanel = new MetadataPanel(this::onSaved);
-        ThemedSplitPanel mainSplit = new ThemedSplitPanel(JSplitPane.HORIZONTAL_SPLIT,
+        mainSplit = new ThemedSplitPanel(JSplitPane.HORIZONTAL_SPLIT,
         buildCenterPanel(), metaPanel);
         metaPanel.setMinimumSize(new Dimension(0,0));
-        mainSplit.setDividerLocation(getWidth() - 300);
-        mainSplit.setDividerSize(5);
+        //mainSplit.setDividerLocation(getWidth() - 300);
+        mainSplit.setDividerSize(10);
         mainSplit.setBorder(null);
         mainSplit.setBackground(ThemeUtils.PanelType.BACKGROUND);
         mainSplit.setResizeWeight(1.0);
@@ -835,6 +840,10 @@ public class MainWindow extends JFrame {
             activeScanner.stop();
         viewer.shutdown();
         thumbStrip.shutdown();
+
+        //guardar preferencias finales
+        prefs.put(COLLAPSE_PREF_KEY, mainSplit.getCollapseState().getName()); 
+
         dispose();
         System.exit(0);
     }
@@ -940,5 +949,14 @@ public class MainWindow extends JFrame {
         ThemeManager.getInstance().toggleLightDark();
         applyThemeToFrame();
         prefs.put(THEME_PREF_KEY, ThemeManager.getInstance().getCurrentTheme().getThemeName());
+    }
+
+    private void applyUIprefs(){
+        String state = prefs.get(COLLAPSE_PREF_KEY, ThemedSplitPanel.CollapseState.NORMAL.name());
+        try {
+            mainSplit.setCollapse(ThemedSplitPanel.CollapseState.valueOf(state));
+        } catch (IllegalArgumentException e) {
+            mainSplit.setCollapse(ThemedSplitPanel.CollapseState.NORMAL);
+        }
     }
 }
