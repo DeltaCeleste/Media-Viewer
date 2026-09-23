@@ -44,6 +44,7 @@ import com.mediaviewer.util.ThemeUtils;
  */
 public class MetadataPanel extends ThemedPanel {
     private final static int SHOW_COPY_TIME = 2000;
+    private final static int SCROLL_SPEED   = 25;
 
     private final AtomicInteger copyInteger = new AtomicInteger(0);
 
@@ -103,6 +104,8 @@ public class MetadataPanel extends ThemedPanel {
         ThemedScroll sp = new ThemedScroll(tree);
         sp.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
         sp.setPreferredSize(new Dimension(0, 500));
+        sp.getVerticalScrollBar().setUnitIncrement(SCROLL_SPEED);
+        sp.getHorizontalScrollBar().setUnitIncrement(SCROLL_SPEED);
         center.addToPanel(sp);
         center.addToPanel(vgap(4));
 

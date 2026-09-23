@@ -57,6 +57,10 @@ public class ThemedScroll extends ThemedComponent {
         return scroll.getHorizontalScrollBar();
     }
 
+    public JScrollBar getVerticalScrollBar(){
+        return scroll.getVerticalScrollBar();
+    }
+
     @Override
     public void setPreferredSize(Dimension d){
         scroll.setPreferredSize(d);
